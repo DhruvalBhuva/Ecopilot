@@ -1,0 +1,68 @@
+# ========== Data Sources ==========
+data_sources:
+  directories:
+    - artifacts/data/Deutsche
+    - artifacts/data/English
+  links:
+    # - https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html
+
+# ========== Data Directories ==========
+directories:
+  deutsche_chunks_dict: artifacts/chunks/deutsche
+  english_chunks_dict: artifacts/chunks/english
+
+# ========== Data Preprocessing ==========
+data_preprocessing:
+  chunking:
+    chunk_size: 1000 # Characters
+    chunk_overlap: 200
+
+# ========== Embedding Models ==========
+embedding_models:
+  active_models:
+    model1: "openai"
+    model2: "jinaai"
+
+  models:
+    openai:
+      name: "text-embedding-ada-002"
+      dimensions: 3072
+      provider: "openai"
+      api_key: ${OPENAI_API_KEY}
+      sql_table: "openai_embeddings"
+
+    jinaai:
+      name: "jinaai/jina-embeddings-v2-base-de"
+      dimensions: 768
+      provider: "huggingface"
+      sql_table: "jinaai_embeddings"
+
+# ========== Vector Database (Pinecone) ==========
+vector_db:
+  active: "pinecone"
+
+  providers:
+    pinecone:
+      api_key: ${PINECONE_API_KEY}
+      environment: "us-east-1"
+
+      indexes:
+        openai_index:
+          index_name: "ecopilot-openai-embeddings"
+          dimension: 1536 # Must match embedding model
+          metric: "cosine"
+          cloud: "aws"
+        jinaai_index:
+          index_name: "ecopilot-jinaai-embeddings"
+          dimension: 768 # Must match embedding model
+          metric: "cosine"
+          cloud: "aws"
+
+    postgresql:
+      host: ${POSTGRES_HOST}
+      port: ${POSTGRES_PORT}
+      database: ${POSTGRES_DB}
+      user: ${POSTGRES_USER}
+      password: ${POSTGRES_PASSWORD}
+      jinaai_table: "jinaai_embeddings"
+      openai_table: "openai_embeddings"
