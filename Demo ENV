@@ -1,0 +1,8 @@
+OPENAI_API_KEY = "<Add your API key here>"
+HUGGINGFACE_API_KEY = "<Add your API key here>"
+PINECONE_API_KEY = "<Add your API key here>"
+POSTGRES_HOST="<Add your host here>"
+POSTGRES_PORT="<Add your port here>"
+POSTGRES_DB="<Add your db name here>"
+POSTGRES_USER="<Add your user here>"
+POSTGRES_PASSWORD="<Add your password here>"
