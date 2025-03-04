@@ -1,0 +1,204 @@
+import psycopg2
+import torch
+from src.logger import logger
+from src.load_config import LoadConfig
+from pgvector.psycopg2 import register_vector
+from langchain.docstore.document import Document
+from src.components.jinaaiWrapper import JinaaiWrapper
+
+
+class PostgreSQLWrapper:
+
+    def __init__(self, host, port, database, user, password):
+        self.host = host
+        self.port = port
+        self.database = database
+        self.user = user
+        self.password = password
+        self.connection = self._connect_to_postgres()
+        # self._create_table_if_not_exists()
+
+    def _connect_to_postgres(self):
+        """Connect to PostgreSQL database."""
+        try:
+            conn = psycopg2.connect(
+                host=self.host,
+                port=self.port,
+                database=self.database,
+                user=self.user,
+                password=self.password,
+            )
+            register_vector(conn)  # Register pgvector extension
+            return conn
+        except Exception as e:
+            logger.error(f"Error connecting to PostgreSQL: {e}")
+            raise
+
+    def _create_table_if_not_exists(self):
+        """Create the table if it doesn't exist."""
+        try:
+            with self.connection.cursor() as cursor:
+                # Check if the table already exists
+                cursor.execute(
+                    f"""
+                    SELECT EXISTS (
+                        SELECT FROM information_schema.tables 
+                        WHERE table_name = %s
+                    );
+                    """,
+                    (self.table,),
+                )
+                table_exists = cursor.fetchone()[0]
+
+                if not table_exists:
+                    # Create the table if it doesn't exist
+                    cursor.execute(
+                        f"""
+                        CREATE TABLE {self.table} (
+                            id SERIAL PRIMARY KEY,
+                            source TEXT,
+                            chunk_num INTEGER,
+                            bm25_score FLOAT,
+                            embedding VECTOR(768),
+                            language TEXT,
+                            text TEXT
+                        );
+                        """
+                    )
+                    self.connection.commit()
+                    logger.info(f"Table '{self.table}' created successfully.")
+                else:
+                    logger.info(
+                        f"Table '{self.table}' already exists. Skipping creation."
+                    )
+        except Exception as e:
+            logger.error(f"Error creating or checking table: {e}")
+            raise
+
+    def insert_embeddings(self, documents, table="openai_embeddings"):
+        """Insert documents and their embeddings into PostgreSQL."""
+        try:
+            with self.connection.cursor() as cursor:
+                for doc in documents:
+                    embedding = doc.metadata.get("embedding")
+                    embedding = (
+                        embedding.tolist()
+                        if isinstance(embedding, torch.Tensor)
+                        else embedding
+                    )
+
+                    cursor.execute(
+                        f"""
+                        INSERT INTO {table} (source, chunk_num, bm25_score, embedding, language, text)
+                        VALUES (%s, %s, %s, %s, %s, %s);
+                    """,
+                        (
+                            doc.metadata.get("source", "Unknown Source"),
+                            doc.metadata.get("chunk_num", 0),
+                            doc.metadata.get("bm25_score", 0),
+                            embedding,
+                            doc.metadata.get("language", "en"),
+                            doc.page_content,
+                        ),
+                    )
+                self.connection.commit()
+                logger.info(f"Inserted {len(documents)} embeddings into PostgreSQL.")
+        except Exception as e:
+            logger.error(f"Error inserting embeddings: {e}")
+            raise
+
+    def get_record_count(self, table="openai_embeddings"):
+        """
+        Retrieve the total number of records (rows) in the table.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(f"SELECT COUNT(*) FROM {table};")
+                total_rows = cursor.fetchone()[0]
+                return total_rows
+        except Exception as e:
+            logger.error(f"Error retrieving record count: {e}")
+            raise
+
+    def delete_records(self, record_ids=None, table="openai_embeddings"):
+        """
+        Delete records from the table.
+        If `record_ids` is provided, delete only those records.
+        If `record_ids` is None, delete all records.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                if record_ids:
+                    # Delete specific records by IDs
+                    record_ids_str = ",".join(
+                        map(str, record_ids)
+                    )  # Convert IDs to a comma-separated string
+                    cursor.execute(
+                        f"DELETE FROM {table} WHERE id IN ({record_ids_str});"
+                    )
+                    logger.info(f"Deleted {len(record_ids)} records from PostgreSQL.")
+                else:
+                    # Delete all records
+                    cursor.execute(f"DELETE FROM {table};")
+                    logger.info("Deleted all records from PostgreSQL.")
+                self.connection.commit()
+        except Exception as e:
+            logger.error(f"Error deleting records: {e}")
+            raise
+
+    def close_connection(self):
+        """Close the PostgreSQL connection."""
+        if self.connection:
+            self.connection.close()
+            logger.info("PostgreSQL connection closed.")
+
+
+if __name__ == "__main__":
+    # Load the configuration
+    config_loader = LoadConfig()
+    dummy_docs = [
+        Document(
+            page_content="This is a test document about AI and machine learning.",
+            metadata={"source": "source1", "chunk_num": 1, "bm25_score": 0.9},
+        ),
+        Document(
+            page_content="Another document, this time about deep learning and neural networks.",
+            metadata={"source": "source2", "chunk_num": 2, "bm25_score": 0.8},
+        ),
+        Document(
+            page_content="A final document on the future of artificial intelligence.",
+            metadata={"source": "source3", "chunk_num": 3, "bm25_score": 0.7},
+        ),
+    ]
+
+    # jinaai_embedding_model_config = config_loader.get_embedding_model_config("jinaai")
+    # jinaai_embedder = JinaaiWrapper(
+    #     jinaai_embedding_model_config, config_loader.device
+    # )
+
+    # for doc in dummy_docs:
+    #     embedding = jinaai_embedder.embed_query(doc.page_content)
+    #     embeddings = jinaai_embedder.extend_to_1536(embedding)
+    #     doc.metadata["embedding"] = embeddings
+
+    # Initialize PostgreSQLWrapper
+    postgresql_wrapper = PostgreSQLWrapper(
+        host=config_loader.pg_host,
+        port=config_loader.pg_port,
+        database=config_loader.pg_database,
+        user=config_loader.pg_user,
+        password=config_loader.pg_password,
+    )
+
+    # Insert dummy documents into PostgreSQL
+    # postgresql_wrapper.insert_embeddings(dummy_docs, table=config_loader.jinaai_table)
+
+    # Get the total number of records in the table
+    # total_records = postgresql_wrapper.get_record_count(table=config_loader.jinaai_table)
+    # print(f"Total records in the table: {total_records}")
+
+    # Delete all records from the table
+    # postgresql_wrapper.delete_records(table=config_loader.jinaai_table)
+
+    # Close the PostgreSQL connection
+    postgresql_wrapper.close_connection()
