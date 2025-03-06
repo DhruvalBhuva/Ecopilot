@@ -1,5 +1,6 @@
 import os
 import re
+import html
 import json
 import random
 import unicodedata
@@ -101,45 +102,71 @@ def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
 
 
 def clean_text(text, words_to_remove=None):
+    """
+    Cleans and normalizes text by fixing Unicode issues, removing unwanted patterns, and improving readability.
+    """
+    try:
+        # 1. Normalize Unicode characters (fix ambiguous characters)
+        # Example: Converts full-width characters to standard width, ligatures to normal letters
+        # "ＡＢＣ" → "ABC", "ﬁ" → "fi"
+        text = unicodedata.normalize("NFKC", text)
+        
+        # 2. Decode escaped Unicode sequences
+        # Example: Converts "\u2013" to "–" (en-dash), "\n" to actual newline
+        text = bytes(text, "utf-8").decode("unicode_escape")
+        
+        # 3. Replace escaped newlines with actual newlines
+        # Example: "Hello\\nWorld" → "Hello\nWorld"
+        text = re.sub(r'\\n', '\n', text)
 
-    # Normalize Unicode characters (fix ambiguous characters)
-    text = unicodedata.normalize("NFKC", text)
+        # 4. Remove unnecessary placeholders like "<EOS> <pad>"
+        # Example: "Hello <EOS> <pad> World" → "Hello World"
+        text = re.sub(r'\s*<EOS>\s*<pad>\s*', ' ', text)
 
-    # Remove \n\n (double newlines) and replace with a single space
-    text = re.sub(r"\n\n", " ", text)
+        # 5. Decode HTML entities
+        # Example: "Tom &amp; Jerry" → "Tom & Jerry"
+        text = html.unescape(text)
 
-    text = re.sub(r"\[.*?\]", "", text)
+        # 6. Fix encoding issues (double encoding)
+        # Example: "MÃ¼ller" → "Müller"
+        text = text.encode('latin1').decode('utf-8', 'ignore')
 
-    # 1. Remove long sequences of dots (3 or more dots in a row)
-    # Example: "Sektor . . . . . . . . . . 117–118"  → "Sektor  117–118"
-    text = re.sub(r"\s*\.\s*(?:\.\s*)+", " ", text)
+        # 7. Remove long sequences of dots (3 or more in a row)
+        # Example: "Sektor . . . . . . . . . . 117–118" → "Sektor 117–118"
+        text = re.sub(r"\s*\.\s*(?:\.\s*)+", " ", text)
 
-    # 2. Remove page number ranges (e.g., "117–118", "25–30")
-    # Example: "Technisch unvermeidbare Abwärme 121–125" → "Technisch unvermeidbare Abwärme"
-    text = re.sub(r"\[\d+(?:[,-]\d+)*\]|\b\d{1,3}[–-]\d{1,3}\b", "", text)
+        # 8. Remove page number ranges (e.g., "[117–118]", "[25]", [ ])
+        # Example: "Technisch unvermeidbare Abwärme [121–125]" → "Technisch unvermeidbare Abwärme"
+        text = re.sub(r"\[\s*\d+(?:[,-]\d+)*\s*\]|\[\s*\]", "", text)
 
-    # 4. Fix words that have been incorrectly split by spaces (common OCR issue)
-    # Example: "E n e r g y   M a n a g e m e n t" → "EnergyManagement"
-    text = re.sub(
-        r"\b([A-ZÄÖÜa-zäöüß])(?:\s+([A-ZÄÖÜa-zäöüß]))+\b",
-        lambda m: m.group(0).replace(" ", ""),  # Merge split words
-        text,
-    )
 
-    # 5. Remove specified words (if a list of words is provided)
-    # Example: If words_to_remove = ["Technisch", "Abwärme"]
-    # "Technisch unvermeidbare Abwärme" → "unvermeidbare"
-    if words_to_remove:
-        pattern = (
-            r"\b(" + "|".join(re.escape(word) for word in words_to_remove) + r")\b"
+        # 9. Fix words that have been incorrectly split by spaces (common OCR issue)
+        # Example: "E n e r g y   M a n a g e m e n t" → "EnergyManagement"
+        text = re.sub(
+            r"\b([A-ZÄÖÜa-zäöüß])(?:\s+([A-ZÄÖÜa-zäöüß]))+\b",
+            lambda m: m.group(0).replace(" ", ""),  # Merge split words
+            text,
         )
-        text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
-    # 6. Remove excessive spaces and newlines
-    # Example:"Sektor    Technisch    unvermeidbare" → "Sektor Technisch unvermeidbare"
-    text = re.sub(r"\s+", " ", text).strip()
+        # 10. Remove specified words (if a list of words is provided)
+        # Example: If words_to_remove = ["Technisch", "Abwärme"]
+        # "Technisch unvermeidbare Abwärme" → "unvermeidbare"
+        if words_to_remove:
+            pattern = (
+                r"\b(" + "|".join(re.escape(word) for word in words_to_remove) + r")\b"
+            )
+            text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
-    return text
+        # 11. Remove excessive spaces and newlines
+        # Example: "Sektor    Technisch    unvermeidbare" → "Sektor Technisch unvermeidbare"
+        text = re.sub(r"\s+", " ", text).strip()
+
+        return text
+    
+    except Exception as e:
+        logger.error(f"Error cleaning text: {e}")
+        return text
+        
 
 
 def detect_language(text):
