@@ -7,12 +7,14 @@ import unicodedata
 from langdetect import detect
 from src.logger import logger
 from rank_bm25 import BM25Okapi
+from nltk.corpus import stopwords
 from langchain_community.document_loaders import (
     UnstructuredPDFLoader,
     UnstructuredURLLoader,
 )
 from src.load_config import LoadConfig
 from langchain.docstore.document import Document
+from sklearn.feature_extraction.text import TfidfVectorizer
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 
 # Load config
@@ -84,6 +86,37 @@ def load_pdf_with_langchain(pdf_path):
         return []
 
 
+
+def extract_keywords_tfidf(text, num_keywords=15):
+    """
+    Extracts top `num_keywords` based on TF-IDF scores for mixed English and German text.
+    """
+    try:
+        # Combine English and German stopwords
+        en_stopwords = set(stopwords.words("english")).union(["https"])
+        de_stopwords = set(stopwords.words("german")).union(["speaker2", "speaker1", "ähm", "äh", "ja", "nein", "okay"])
+        stop_words = en_stopwords.union(de_stopwords)
+
+        # Initialize TF-IDF Vectorizer with combined stopwords
+        vectorizer = TfidfVectorizer(stop_words=list(stop_words), max_features=1000)
+
+        # Fit and transform the text
+        tfidf_matrix = vectorizer.fit_transform([text])
+
+        # Get feature names (words) and their TF-IDF scores
+        feature_names = vectorizer.get_feature_names_out()
+        tfidf_scores = tfidf_matrix.toarray()[0]
+
+        # Sort words by TF-IDF scores and extract top keywords
+        top_keyword_indices = tfidf_scores.argsort()[-num_keywords:][::-1]
+        top_keywords = [feature_names[i] for i in top_keyword_indices]
+
+        return top_keywords
+
+    except Exception as e:
+        logger.error(f"Error extracting keywords: {e}")
+        return []
+
 def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
     """Chunks documents into smaller sections and adds chunk number to metadata."""
     text_splitter = RecursiveCharacterTextSplitter(
@@ -97,6 +130,7 @@ def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
         chunks = text_splitter.split_documents([doc])
         for idx, chunk in enumerate(chunks):
             chunk.metadata["chunk_num"] = idx + 1
+            # chunk.metadata["keywords"] = extract_keywords_tfidf(chunk.page_content)
         all_chunks.extend(chunks)
     return all_chunks
 
@@ -225,6 +259,7 @@ def save_all_chunks_to_json(
                 "chunk_num": doc.metadata.get("chunk_num", 0),
                 "bm25_score": doc.metadata.get("bm25_score", 0),
                 "language": doc.metadata.get("language", "en"),
+                "keywords": doc.metadata.get("keywords", []),
             }
             for doc in chunk_subset
         ]
