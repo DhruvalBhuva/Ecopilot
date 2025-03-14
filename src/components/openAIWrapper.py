@@ -5,12 +5,13 @@ from src.logger import logger
 from openai import OpenAI
 from src.load_config import LoadConfig
 
+config_loader = LoadConfig()
+
 
 class OpenAIWrapper:
 
     def __init__(
         self,
-        api_key,
         embedding_model_name="text-embedding-ada-002",
         llm_model_name="o1-mini",
         temperature=0.7,
@@ -24,7 +25,8 @@ class OpenAIWrapper:
         :param return_torch: If True, return embeddings as PyTorch tensors (default: False).
                              Note: This is deprecated and will be removed in the future.
         """
-        self.client = OpenAI(api_key=api_key)
+        self.api_key = config_loader.OPENAI_API_KEY
+        self.client = OpenAI(api_key=self.api_key)
         self.embedding_model_name = embedding_model_name
         self.return_torch = return_torch  # Deprecated, kept for backward compatibility
         self.tokenizer = tiktoken.encoding_for_model(embedding_model_name)
@@ -45,7 +47,8 @@ class OpenAIWrapper:
             embeddings = [embedding.embedding for embedding in response.data]
 
             # convert to float
-            embeddings = [[float(x) for x in embedding] for embedding in embeddings]
+            embeddings = [[float(x) for x in embedding]
+                          for embedding in embeddings]
 
             if self.return_torch:
                 return torch.tensor(embeddings)[0]
@@ -93,9 +96,10 @@ class OpenAIWrapper:
 
         # Process texts in batches
         for i in range(0, len(texts), batch_size):
-            batch = texts[i : i + batch_size]
+            batch = texts[i: i + batch_size]
             # Tokenize the batch
-            batch_token_counts = [len(self.tokenizer.encode(text)) for text in batch]
+            batch_token_counts = [len(self.tokenizer.encode(text))
+                                  for text in batch]
             token_counts.extend(batch_token_counts)
 
         return sum(token_counts)
@@ -112,16 +116,17 @@ class OpenAIWrapper:
             chat_completion = self.client.chat.completions.create(
                 messages=[
                     {
-                        "role": "user",
-                        "content": "Say this is a test",
+                        "role": "developer",
+                        "content": config_loader.llm_system_role
                     },
-                    # {
-                    #     "role": "assistant",
-                    #     "content": prompt,
-                    # },
+                    {
+                        "role": "user",
+                        "content": prompt,
+                    },
                 ],
                 model=self.llm_model_name,
             )
+
             return chat_completion.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating text: {e}")
@@ -134,8 +139,7 @@ if __name__ == "__main__":
 
     # Initialize OpenAI embedding model with PyTorch support
     openai_embedder = OpenAIWrapper(
-        api_key=config_loader.OPENAI_API_KEY,
-        embedding_model_name=config_loader.get_embedding_model_config("openai")["name"],
+        embedding_model_name=config_loader.embedding_model,
     )
 
     # Test embedding
