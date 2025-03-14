@@ -4,7 +4,6 @@ import html
 import json
 import random
 import unicodedata
-from langdetect import detect
 from src.logger import logger
 from rank_bm25 import BM25Okapi
 from nltk.corpus import stopwords
@@ -161,20 +160,16 @@ def clean_text(text, words_to_remove=None):
         # Example: "Tom &amp; Jerry" → "Tom & Jerry"
         text = html.unescape(text)
 
-        # 6. Fix encoding issues (double encoding)
-        # Example: "MÃ¼ller" → "Müller"
-        text = text.encode('latin1').decode('utf-8', 'ignore')
-
-        # 7. Remove long sequences of dots (3 or more in a row)
+        # 6. Remove long sequences of dots (3 or more in a row)
         # Example: "Sektor . . . . . . . . . . 117–118" → "Sektor 117–118"
         text = re.sub(r"\s*\.\s*(?:\.\s*)+", " ", text)
 
-        # 8. Remove page number ranges (e.g., "[117–118]", "[25]", [ ])
+        # 7. Remove page number ranges (e.g., "[117–118]", "[25]", [ ])
         # Example: "Technisch unvermeidbare Abwärme [121–125]" → "Technisch unvermeidbare Abwärme"
         text = re.sub(r"\[\s*\d+(?:[,-]\d+)*\s*\]|\[\s*\]", "", text)
 
 
-        # 9. Fix words that have been incorrectly split by spaces (common OCR issue)
+        # 8. Fix words that have been incorrectly split by spaces (common OCR issue)
         # Example: "E n e r g y   M a n a g e m e n t" → "EnergyManagement"
         text = re.sub(
             r"\b([A-ZÄÖÜa-zäöüß])(?:\s+([A-ZÄÖÜa-zäöüß]))+\b",
@@ -182,7 +177,7 @@ def clean_text(text, words_to_remove=None):
             text,
         )
 
-        # 10. Remove specified words (if a list of words is provided)
+        # 9. Remove specified words (if a list of words is provided)
         # Example: If words_to_remove = ["Technisch", "Abwärme"]
         # "Technisch unvermeidbare Abwärme" → "unvermeidbare"
         if words_to_remove:
@@ -191,7 +186,7 @@ def clean_text(text, words_to_remove=None):
             )
             text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
-        # 11. Remove excessive spaces and newlines
+        # 10. Remove excessive spaces and newlines
         # Example: "Sektor    Technisch    unvermeidbare" → "Sektor Technisch unvermeidbare"
         text = re.sub(r"\s+", " ", text).strip()
 
@@ -201,15 +196,6 @@ def clean_text(text, words_to_remove=None):
         logger.error(f"Error cleaning text: {e}")
         return text
         
-
-
-def detect_language(text):
-    """Detects the language of a given text."""
-    try:
-        return detect(text)
-    except:
-        return "unknown"
-
 
 def compute_bm25_scores(documents):
     """
@@ -233,7 +219,7 @@ def compute_bm25_scores(documents):
 
 
 def save_all_chunks_to_json(
-    documents, directory, base_filename="chunks", max_chunks_per_file=500
+    documents, directory, max_chunks_per_file=500
 ):
     """Save all document chunks to JSON files, ensuring the target directory exists."""
     if not documents:
@@ -258,13 +244,12 @@ def save_all_chunks_to_json(
                 "source": doc.metadata.get("source", "Unknown Source"),
                 "chunk_num": doc.metadata.get("chunk_num", 0),
                 "bm25_score": doc.metadata.get("bm25_score", 0),
-                "language": doc.metadata.get("language", "en"),
                 "keywords": doc.metadata.get("keywords", []),
             }
             for doc in chunk_subset
         ]
 
-        filename = os.path.join(directory, f"{base_filename}_chunk_{i+1}.json")
+        filename = os.path.join(directory, f"chunk_{i+1}.json")
 
         with open(filename, "w", encoding="utf-8") as f:
             json.dump(chunk_data, f, ensure_ascii=False, indent=4)
@@ -272,84 +257,11 @@ def save_all_chunks_to_json(
     logger.info(f"Saved {total_chunks} chunks across {num_files} file(s).")
 
 
-def save_random_chunks_to_json(documents, filename="random_chunks.json", num_samples=5):
-    """Save randomly selected document chunks to a JSON file."""
-    if not documents:
-        print("No documents available to save.")
-        return
-
-    sampled_docs = random.sample(documents, min(num_samples, len(documents)))
-
-    chunk_data = [
-        {
-            "text": doc.page_content,
-            "source": doc.metadata.get("source", "Unknown Source"),
-            "chunk_num": doc.metadata.get("chunk_num", 0),
-            "bm25_score": doc.metadata.get("bm25_score", 0),
-            "language": doc.metadata.get("language", "en"),
-        }
-        for doc in sampled_docs
-    ]
-
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(chunk_data, f, ensure_ascii=False, indent=4)
-
-    logger.info(f"Saved {len(sampled_docs)} random chunks to {filename}")
-
-
-def saperate_docs_by_language(chunked_documents):
-    english_docs = []
-    german_docs = []
-
-    for doc in chunked_documents:
-        lang = detect_language(doc.page_content)
-        if lang == "en":
-            doc.metadata["language"] = "en"
-            english_docs.append(doc)
-        elif lang == "de":
-            doc.metadata["language"] = "de"
-            german_docs.append(doc)
-        else:
-            doc.metadata["language"] = "en"
-            english_docs.append(doc)
-            logger.info(
-                f"Unknown language chunk: {lang} of doc '{doc.metadata.get("source", "Unknown Source")}'. Defaulting to English."
-            )
-
-    return english_docs, german_docs
-
-
 if __name__ == "__main__":
-    sources = [
-        "artifacts/data/Deutsche",
-        "artifacts/data/English",
-    ]
-
+    sources = config_loader.data_sources
     chunked_documents = load_documents(sources)
-    english_docs, german_docs = saperate_docs_by_language(chunked_documents)
-
-    # Print English and German documents
-    print(f"Loaded {len(chunked_documents)} document chunks")
-    print(f"Number of English documents: {len(english_docs)}")
-    print(f"Number of German documents: {len(german_docs)}")
-    print("-" * 20)
 
     # Print chunked documents
     # for doc in chunked_documents[:1]:
     #     print(doc)
     #     print("-" * 20)
-
-    # for doc in english_docs[:1]:
-    #     print(doc)
-    #     print("-" * 20)
-
-    # for doc in german_docs[:1]:
-    #     print(doc)
-    #     print("-" * 20)
-
-    save_random_chunks_to_json(
-        english_docs, "artifacts/random_english_chunks.json", num_samples=50
-    )
-    save_random_chunks_to_json(
-        german_docs, "artifacts/random_german_chunks.json", num_samples=50
-    )
