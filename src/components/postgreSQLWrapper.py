@@ -9,14 +9,17 @@ from src.components.jinaaiWrapper import JinaaiWrapper
 
 class PostgreSQLWrapper:
 
-    def __init__(self, host, port, database, user, password):
-        self.host = host
-        self.port = port
-        self.database = database
-        self.user = user
-        self.password = password
+    def __init__(self, pg_table: str = None):
+        config_loader = LoadConfig()
+        
+        self.host = config_loader.pg_host
+        self.port = config_loader.pg_port
+        self.database = config_loader.pg_database
+        self.table = pg_table or config_loader.pg_table
+        self.user = config_loader.pg_user
+        self.password = config_loader.pg_password
         self.connection = self._connect_to_postgres()
-        # self._create_table_if_not_exists()
+        self._create_table_if_not_exists()
 
     def _connect_to_postgres(self):
         """Connect to PostgreSQL database."""
@@ -54,13 +57,12 @@ class PostgreSQLWrapper:
                     # Create the table if it doesn't exist
                     cursor.execute(
                         f"""
-                        CREATE TABLE {self.table} (
+                        CREATE TABLE "{self.table}" (
                             id SERIAL PRIMARY KEY,
                             source TEXT,
                             chunk_num INTEGER,
                             bm25_score FLOAT,
-                            embedding VECTOR(768),
-                            language TEXT,
+                            embedding VECTOR(1536),
                             text TEXT
                         );
                         """
@@ -75,7 +77,7 @@ class PostgreSQLWrapper:
             logger.error(f"Error creating or checking table: {e}")
             raise
 
-    def insert_embeddings(self, documents, table="openai_embeddings"):
+    def insert_embeddings(self, documents, table="ecopilot-corpus"):
         """Insert documents and their embeddings into PostgreSQL."""
         try:
             with self.connection.cursor() as cursor:
@@ -89,15 +91,14 @@ class PostgreSQLWrapper:
 
                     cursor.execute(
                         f"""
-                        INSERT INTO {table} (source, chunk_num, bm25_score, embedding, language, text)
-                        VALUES (%s, %s, %s, %s, %s, %s);
+                        INSERT INTO "{table}" (source, chunk_num, bm25_score, embedding, text)
+                        VALUES (%s, %s, %s, %s, %s);
                     """,
                         (
                             doc.metadata.get("source", "Unknown Source"),
                             doc.metadata.get("chunk_num", 0),
                             doc.metadata.get("bm25_score", 0),
                             embedding,
-                            doc.metadata.get("language", "en"),
                             doc.page_content,
                         ),
                     )
@@ -107,20 +108,20 @@ class PostgreSQLWrapper:
             logger.error(f"Error inserting embeddings: {e}")
             raise
 
-    def get_record_count(self, table="openai_embeddings"):
+    def get_record_count(self, table="ecopilot-corpus"):
         """
         Retrieve the total number of records (rows) in the table.
         """
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(f"SELECT COUNT(*) FROM {table};")
+                cursor.execute(f"SELECT COUNT(*) FROM '{table}';")
                 total_rows = cursor.fetchone()[0]
                 return total_rows
         except Exception as e:
             logger.error(f"Error retrieving record count: {e}")
             raise
 
-    def delete_records(self, record_ids=None, table="openai_embeddings"):
+    def delete_records(self, record_ids=None, table="ecopilot-corpus"):
         """
         Delete records from the table.
         If `record_ids` is provided, delete only those records.
@@ -134,12 +135,12 @@ class PostgreSQLWrapper:
                         map(str, record_ids)
                     )  # Convert IDs to a comma-separated string
                     cursor.execute(
-                        f"DELETE FROM {table} WHERE id IN ({record_ids_str});"
+                        f"DELETE FROM '{table}' WHERE id IN ({record_ids_str});"
                     )
                     logger.info(f"Deleted {len(record_ids)} records from PostgreSQL.")
                 else:
                     # Delete all records
-                    cursor.execute(f"DELETE FROM {table};")
+                    cursor.execute(f"DELETE FROM '{table}';")
                     logger.info("Deleted all records from PostgreSQL.")
                 self.connection.commit()
         except Exception as e:
@@ -161,37 +162,13 @@ if __name__ == "__main__":
             page_content="This is a test document about AI and machine learning.",
             metadata={"source": "source1", "chunk_num": 1, "bm25_score": 0.9},
         ),
-        Document(
-            page_content="Another document, this time about deep learning and neural networks.",
-            metadata={"source": "source2", "chunk_num": 2, "bm25_score": 0.8},
-        ),
-        Document(
-            page_content="A final document on the future of artificial intelligence.",
-            metadata={"source": "source3", "chunk_num": 3, "bm25_score": 0.7},
-        ),
     ]
 
-    # jinaai_embedding_model_config = config_loader.get_embedding_model_config("jinaai")
-    # jinaai_embedder = JinaaiWrapper(
-    #     jinaai_embedding_model_config, config_loader.device
-    # )
-
-    # for doc in dummy_docs:
-    #     embedding = jinaai_embedder.embed_query(doc.page_content)
-    #     embeddings = jinaai_embedder.extend_to_1536(embedding)
-    #     doc.metadata["embedding"] = embeddings
-
     # Initialize PostgreSQLWrapper
-    postgresql_wrapper = PostgreSQLWrapper(
-        host=config_loader.pg_host,
-        port=config_loader.pg_port,
-        database=config_loader.pg_database,
-        user=config_loader.pg_user,
-        password=config_loader.pg_password,
-    )
+    postgresql_wrapper = PostgreSQLWrapper()
 
     # Insert dummy documents into PostgreSQL
-    # postgresql_wrapper.insert_embeddings(dummy_docs, table=config_loader.jinaai_table)
+    # postgresql_wrapper.insert_embeddings(dummy_docs)
 
     # Get the total number of records in the table
     # total_records = postgresql_wrapper.get_record_count(table=config_loader.jinaai_table)

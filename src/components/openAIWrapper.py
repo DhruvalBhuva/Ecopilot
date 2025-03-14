@@ -7,7 +7,6 @@ from src.load_config import LoadConfig
 
 config_loader = LoadConfig()
 
-
 class OpenAIWrapper:
 
     def __init__(
@@ -126,7 +125,6 @@ class OpenAIWrapper:
                 ],
                 model=self.llm_model_name,
             )
-
             return chat_completion.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating text: {e}")
