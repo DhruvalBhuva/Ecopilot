@@ -6,7 +6,6 @@ langchain-core==0.3.40
 langchain-pinecone==0.2.3
 langchain-tests==0.3.12
 langchain-text-splitters==0.3.6
-langdetect==1.0.9
 nltk==3.9.1
 numpy==1.26.4
 openai==1.64.0
