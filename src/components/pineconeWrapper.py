@@ -9,26 +9,35 @@ from src.components.openAIWrapper import OpenAIWrapper
 
 
 class PineconeWrapper:
-    def __init__(self, api_key: str, environment: str, indexes_config: Dict[str, dict]):
+    def __init__(self, api_key: str = None, index_name: str = "ecopilot-corpus"):
         self.api_key = api_key
-        self.environment = environment
-        self.indexes_config = indexes_config
         self.pinecone_client = None
-        self.indexes = {}  # Store initialized indexes here
-
+        self.index_name = index_name
+        self.index = None
         self.initialize_pinecone()
 
     def initialize_pinecone(self):
         """Initialize Pinecone client and set up multiple indexes."""
         self.pinecone_client = PineconeClient(api_key=self.api_key)
-        existing_indexes = [index.name for index in self.pinecone_client.list_indexes()]
+        # self.index = self.pinecone_client.index(self.index_name)
 
-        for index_name, config in self.indexes_config.items():
+        # Check if index exists, if not create it
+        if self.index.exists():
+            self.index = self.pinecone_client.index(self.index_name)
+            logger.info(f"Index '{self.index_name}' already exists.")
+        else:
+            logger.info(f"Creating index '{self.index_name}'...")
+            self.pinecone_client.create_index(
+                name=self.index_name,
+                dimension=1536,
+                metric="cosine",
+                spec=ServerlessSpec(
+                    cloud="aws",
+                    region="us-east-1",
+                ),
+            )
 
-            self.indexes[index_name] = self.pinecone_client.Index(
-                index_name
-            )  # Use actual index name
-            logger.info(f"Connected to Pinecone index: {index_name}")
+        logger.info(f"Connected to Pinecone index: {self.index_name}")
 
     def generate_vector_id(self, source: str, doc_id: int):
         """Generate a unique vector ID using a hash of source and doc ID."""
@@ -39,16 +48,17 @@ class PineconeWrapper:
     ):
         """Adds documents with embeddings to the specified Pinecone index in batches."""
 
-        if index_name not in self.indexes:
-            logger.error(f"Index '{index_name}' is not initialized.")
+        if index_name != self.index_name:
+            logger.info(
+                f"Provided index name '{index_name}' is different from the initialized index '{self.index_name}'."
+            )
             return
-
-        index = self.indexes[index_name]  # Ensure you are using actual index names
 
         vectors = []
         for i, doc in enumerate(docs):
             vector_id = self.generate_vector_id(
-                doc.metadata.get("source", ""), doc.metadata.get("chunk_num", i)
+                doc.metadata.get("source", ""), doc.metadata.get(
+                    "chunk_num", i)
             )
 
             try:
@@ -71,14 +81,17 @@ class PineconeWrapper:
                     }
                 )
             except Exception as e:
-                logger.error(f"Error generating embedding for document {i}: {e}")
+                logger.error(
+                    f"Error generating embedding for document {i}: {e}")
                 continue
 
         if vectors:
             try:
                 for i in range(0, len(vectors), batch_size):
-                    batch = vectors[i : i + batch_size]
-                    index.upsert(vectors=batch)  # Use correct index object
+                    batch = vectors[i: i + batch_size]
+
+                    # Use correct index object
+                    self.index.upsert(vectors=batch)
 
                     if (i // batch_size + 1) % 1000 == 0:
                         logger.info(
@@ -94,57 +107,27 @@ class PineconeWrapper:
             logger.info("No new vectors to upsert.")
 
     def delete_all_vectors(self, index_name: str):
-        """Deletes all vectors from the specified Pinecone index."""
-        if index_name not in self.indexes:
+        """Deletes all vectors from the specified Pinecone index efficiently."""
+        if index_name != self.index_name:
             logger.error(f"Index '{index_name}' is not initialized.")
             return
 
         try:
-            index_stats = self.indexes[index_name].describe_index_stats()
-            total_vectors = index_stats.get("total_vector_count", 0)
-
-            if total_vectors == 0:
-                logger.info(f"No vectors to delete in index '{index_name}'.")
-                return
-
-            logger.info(f"Deleting {total_vectors} vectors from '{index_name}'.")
-
-            all_ids = []
-            dummy_vector = [0.0] * self.indexes_config[index_name]["dimension"]
-            top_k = 1000
-
-            while True:
-                query_response = self.indexes[index_name].query(
-                    vector=dummy_vector,
-                    top_k=top_k,
-                    include_metadata=False,
-                    include_values=False,
-                )
-                batch_ids = [match.id for match in query_response.matches]
-                all_ids.extend(batch_ids)
-
-                if len(batch_ids) < top_k:
-                    break
-
-            batch_size = 1000
-            for i in range(0, len(all_ids), batch_size):
-                batch_ids = all_ids[i : i + batch_size]
-                self.indexes[index_name].delete(ids=batch_ids)
-                logger.info(f"Deleted {len(batch_ids)} vectors from '{index_name}'.")
-
             logger.info(
-                f"Successfully deleted all {len(all_ids)} vectors from '{index_name}'."
-            )
+                f"Deleting all vectors from '{index_name}' using delete_all=True.")
+            self.indexes[index_name].delete(delete_all=True)
+            logger.info(
+                f"Successfully deleted all vectors from '{index_name}'.")
         except Exception as e:
             logger.error(f"Error deleting vectors from {index_name}: {e}")
 
     def get_index_statistics(self, index_name: str):
         """Prints index statistics for a given index."""
-        if index_name not in self.indexes:
+        if index_name != self.index:
             logger.error(f"Index '{index_name}' is not initialized.")
             return
 
-        index_stats = self.indexes[index_name].describe_index_stats()
+        index_stats = self.index.describe_index_stats()
         logger.info(
             f"Total vectors in '{index_name}': {index_stats['total_vector_count']}"
         )
@@ -154,11 +137,7 @@ class PineconeWrapper:
 if __name__ == "__main__":
     config_loader = LoadConfig()
 
-    pinecone_wrapper = PineconeWrapper(
-        api_key=config_loader.PINECONE_API_KEY,
-        environment=config_loader.pinecone_environment,
-        indexes_config=config_loader.pinecone_indexes_config,
-    )
+    pinecone_wrapper = PineconeWrapper(config_loader.pinecone_index)
 
     # Test document insertion
     test_docs = [
@@ -174,8 +153,7 @@ if __name__ == "__main__":
     ]
 
     openai_embedder = OpenAIWrapper(
-        api_key=config_loader.OPENAI_API_KEY,
-        model_name=config_loader.get_embedding_model_config("openai")["name"],
+        embedding_model_name=config_loader.embedding_model,
     )
 
     for doc in test_docs:
@@ -183,27 +161,12 @@ if __name__ == "__main__":
         doc.metadata["embedding"] = embedding
 
     # Insert into OpenAI index
-    # pinecone_wrapper.upsert_documents(
-    #     test_docs, index_name="ecopilot-openai-embeddings"
-    # )
-
-    # Insert into JinaAI index
     pinecone_wrapper.upsert_documents(
-        test_docs, index_name="ecopilot-openai-embeddings"
+        test_docs, index_name=config_loader.pinecone_index
     )
 
     # delete all vectors
-    # pinecone_wrapper.delete_all_vectors(
-    #     config_loader.get_pinecone_index_config("ecopilot-openai-embeddings")["index_name"]
-    # )
-    # pinecone_wrapper.delete_all_vectors(
-    #     config_loader.get_pinecone_index_config("ecopilot-jinaai-embeddings")["index_name"]
-    # )
+    # pinecone_wrapper.delete_all_vectors(config_loader.pinecone_index)
 
-    # Get statistics for each index
-    # pinecone_wrapper.get_index_statistics(
-    #     config_loader.get_pinecone_index_config("ecopilot-openai-embeddings")["index_name"]
-    # )
-    # pinecone_wrapper.get_index_statistics(
-    #     config_loader.get_pinecone_index_config("ecopilot-jinaai-embeddings")["index_name"]
-    # )
+    # # Get statistics for each index
+    # pinecone_wrapper.get_index_statistics(config_loader.pinecone_index)
