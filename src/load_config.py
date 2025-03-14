@@ -60,10 +60,7 @@ class LoadConfig:
 
     def _init_directories_vars(self) -> None:
         """Create required directories"""
-        self.deutsche_chunks_dict = self.app_config["directories"][
-            "deutsche_chunks_dict"
-        ]
-        self.english_chunks_dict = self.app_config["directories"]["english_chunks_dict"]
+        self.chunks_dict = self.app_config["directories"]["chunks_dict"]
 
     def _init_data_preprocessing_vars(self) -> None:
         """Initialize data preprocessing configuration"""
@@ -72,7 +69,7 @@ class LoadConfig:
         self.chunk_overlap = data_config["chunking"]["chunk_overlap"]
 
     def _init_embeddings_vars(self) -> None:
-        """Initialize embedding models configuration"""
+        """Initialize embedding model configuration"""
         emb_config = self.app_config["embedding_models"]
         self.embedding_model = emb_config["name"]
 
@@ -120,4 +117,4 @@ class LoadConfig:
 if __name__ == "__main__":
     config_loader = LoadConfig()
 
-    print(config_loader.embedding_model)
+    print(config_loader.pinecone_api_key)
