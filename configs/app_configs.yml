@@ -1,15 +1,13 @@
 # ========== Data Sources ==========
 data_sources:
   directories:
-    - artifacts/data/Deutsche
-    - artifacts/data/English
+    - artifacts/data/pdfs
   links:
     # - https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html
 
 # ========== Data Directories ==========
 directories:
-  deutsche_chunks_dict: artifacts/chunks/deutsche
-  english_chunks_dict: artifacts/chunks/english
+  chunks_dict: artifacts/chunks/
 
 # ========== Data Preprocessing ==========
 data_preprocessing:
@@ -19,7 +17,7 @@ data_preprocessing:
 
 # ========== Vector Database (Pinecone) ==========
 vector_db:
-  active: "pinecone"
+  active: "pinecone" # [pinecone | postgresql]
 
   providers:
     pinecone:
