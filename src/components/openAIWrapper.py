@@ -115,7 +115,7 @@ class OpenAIWrapper:
             chat_completion = self.client.chat.completions.create(
                 messages=[
                     {
-                        "role": "developer",
+                        "role": "system",
                         "content": config_loader.llm_system_role
                     },
                     {
