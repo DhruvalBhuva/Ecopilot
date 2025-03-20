@@ -139,26 +139,30 @@ def clean_text(text, words_to_remove=None):
     Cleans and normalizes text by fixing Unicode issues, removing unwanted patterns, and improving readability.
     """
     try:
-        # 1. Normalize Unicode characters (fix ambiguous characters)
+        
+        # 0. Decode escaped Unicode sequences
+        # Example: Converts "\u2013" to "–" (en-dash), "\n" to actual newline
+        text = bytes(text, "utf-8").decode("unicode_escape", "ignore")
+        
+        # 1. Decode HTML entities
+        # Example: "Tom &amp; Jerry" → "Tom & Jerry"
+        text = html.unescape(text)
+        
+        # 2. Replace incorrect unicode characters with correct ones
+        text = text.encode('latin1').decode('utf-8', "ignore")
+        
+        # 3. Normalize Unicode characters (fix ambiguous characters)
         # Example: Converts full-width characters to standard width, ligatures to normal letters
         # "ＡＢＣ" → "ABC", "ﬁ" → "fi"
         text = unicodedata.normalize("NFKC", text)
         
-        # 2. Decode escaped Unicode sequences
-        # Example: Converts "\u2013" to "–" (en-dash), "\n" to actual newline
-        text = bytes(text, "utf-8").decode("unicode_escape")
-        
-        # 3. Replace escaped newlines with actual newlines
-        # Example: "Hello\\nWorld" → "Hello\nWorld"
-        text = re.sub(r'\\n', '\n', text)
-
         # 4. Remove unnecessary placeholders like "<EOS> <pad>"
         # Example: "Hello <EOS> <pad> World" → "Hello World"
         text = re.sub(r'\s*<EOS>\s*<pad>\s*', ' ', text)
-
-        # 5. Decode HTML entities
-        # Example: "Tom &amp; Jerry" → "Tom & Jerry"
-        text = html.unescape(text)
+        
+        # 5. Replace escaped newlines with actual newlines
+        # Example: "Hello\\nWorld" → "Hello\nWorld"
+        text = re.sub(r'\\n', '\n', text)
 
         # 6. Remove long sequences of dots (3 or more in a row)
         # Example: "Sektor . . . . . . . . . . 117–118" → "Sektor 117–118"
