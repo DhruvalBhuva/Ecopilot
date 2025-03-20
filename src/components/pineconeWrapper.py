@@ -7,24 +7,27 @@ from src.load_config import LoadConfig
 from pinecone import Pinecone as PineconeClient
 from src.components.openAIWrapper import OpenAIWrapper
 
-
 class PineconeWrapper:
-    def __init__(self, api_key: str = None, index_name: str = "ecopilot-corpus"):
-        self.api_key = api_key
+    def __init__(self, index_name: str = None):
+
+        config_loader = LoadConfig()
+        
+        self.api_key = config_loader.pinecone_api_key
+        self.index_name = index_name or config_loader.pinecone_index        
         self.pinecone_client = None
-        self.index_name = index_name
         self.index = None
         self.initialize_pinecone()
 
     def initialize_pinecone(self):
-        """Initialize Pinecone client and set up multiple indexes."""
+        """Initialize Pinecone client and connect to or create the index."""
         self.pinecone_client = PineconeClient(api_key=self.api_key)
-        # self.index = self.pinecone_client.index(self.index_name)
 
-        # Check if index exists, if not create it
-        if self.index.exists():
-            self.index = self.pinecone_client.index(self.index_name)
-            logger.info(f"Index '{self.index_name}' already exists.")
+        # Get list of existing indexes
+        existing_indexes = [index.name for index in self.pinecone_client.list_indexes()]
+
+        if self.index_name in existing_indexes:
+            self.index = self.pinecone_client.Index(self.index_name)
+            logger.info(f"Index '{self.index_name}' already exists. Connected.")
         else:
             logger.info(f"Creating index '{self.index_name}'...")
             self.pinecone_client.create_index(
@@ -36,8 +39,9 @@ class PineconeWrapper:
                     region="us-east-1",
                 ),
             )
-
-        logger.info(f"Connected to Pinecone index: {self.index_name}")
+            # Connect after creation
+            self.index = self.pinecone_client.index(self.index_name)
+            logger.info(f"Created and connected to index '{self.index_name}'.")
 
     def generate_vector_id(self, source: str, doc_id: int):
         """Generate a unique vector ID using a hash of source and doc ID."""
@@ -71,7 +75,6 @@ class PineconeWrapper:
                     "text": doc.page_content,
                     "chunk_num": doc.metadata.get("chunk_num", i),
                     "bm25_score": doc.metadata.get("bm25_score", 0),
-                    "language": doc.metadata.get("language", "en"),
                 }
                 vectors.append(
                     {
@@ -115,7 +118,7 @@ class PineconeWrapper:
         try:
             logger.info(
                 f"Deleting all vectors from '{index_name}' using delete_all=True.")
-            self.indexes[index_name].delete(delete_all=True)
+            self.index.delete(delete_all=True)
             logger.info(
                 f"Successfully deleted all vectors from '{index_name}'.")
         except Exception as e:
@@ -156,17 +159,17 @@ if __name__ == "__main__":
         embedding_model_name=config_loader.embedding_model,
     )
 
-    for doc in test_docs:
-        embedding = openai_embedder.embed_documents(doc.page_content)
-        doc.metadata["embedding"] = embedding
+    # for doc in test_docs:
+    #     embedding = openai_embedder.embed_documents(doc.page_content)
+    #     doc.metadata["embedding"] = embedding
 
     # Insert into OpenAI index
-    pinecone_wrapper.upsert_documents(
-        test_docs, index_name=config_loader.pinecone_index
-    )
+    # pinecone_wrapper.upsert_documents(
+    #     test_docs, index_name=config_loader.pinecone_index
+    # )
 
     # delete all vectors
-    # pinecone_wrapper.delete_all_vectors(config_loader.pinecone_index)
+    pinecone_wrapper.delete_all_vectors(config_loader.pinecone_index)
 
     # # Get statistics for each index
     # pinecone_wrapper.get_index_statistics(config_loader.pinecone_index)
