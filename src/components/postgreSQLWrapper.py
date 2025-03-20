@@ -135,12 +135,12 @@ class PostgreSQLWrapper:
                         map(str, record_ids)
                     )  # Convert IDs to a comma-separated string
                     cursor.execute(
-                        f"DELETE FROM '{table}' WHERE id IN ({record_ids_str});"
+                        f"""DELETE FROM "{table}" WHERE id IN ({record_ids_str});"""
                     )
                     logger.info(f"Deleted {len(record_ids)} records from PostgreSQL.")
                 else:
                     # Delete all records
-                    cursor.execute(f"DELETE FROM '{table}';")
+                    cursor.execute(f"""DELETE FROM "{table}";""")
                     logger.info("Deleted all records from PostgreSQL.")
                 self.connection.commit()
         except Exception as e:
@@ -175,7 +175,7 @@ if __name__ == "__main__":
     # print(f"Total records in the table: {total_records}")
 
     # Delete all records from the table
-    # postgresql_wrapper.delete_records(table=config_loader.jinaai_table)
+    postgresql_wrapper.delete_records(table=config_loader.pg_table)
 
     # Close the PostgreSQL connection
     postgresql_wrapper.close_connection()
