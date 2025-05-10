@@ -3,6 +3,7 @@ import re
 import html
 import json
 import random
+import tiktoken
 import unicodedata
 from src.logger import logger
 from rank_bm25 import BM25Okapi
@@ -116,11 +117,17 @@ def extract_keywords_tfidf(text, num_keywords=15):
         logger.error(f"Error extracting keywords: {e}")
         return []
 
+# Use OpenAI's tokenizer (same for text-embedding-3-small)
+encoding = tiktoken.get_encoding("cl100k_base")
+def token_len(text):
+    return len(encoding.encode(text))
+
 def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
     """Chunks documents into smaller sections and adds chunk number to metadata."""
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=config_loader.chunk_size,
         chunk_overlap=config_loader.chunk_overlap,
+        length_function=token_len,
         add_start_index=True,
         separators=["\n\n", "\n", " ", ""],
     )
@@ -133,93 +140,61 @@ def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
         all_chunks.extend(chunks)
     return all_chunks
 
-
 def clean_text(text, words_to_remove=None):
     """
-    Cleans and normalizes text by fixing Unicode issues, removing unwanted patterns, and improving readability.
+    Cleans and normalizes text by fixing Unicode issues, removing unwanted patterns,
+    joining broken hyphenated words, and improving readability.
     """
     try:
-        
-        # 0. Decode escaped Unicode sequences
-        # Example: Converts "\u2013" to "–" (en-dash), "\n" to actual newline
+        import re, html, unicodedata
+
+        # 1. Decode escaped Unicode sequences like "\u2013"
         text = bytes(text, "utf-8").decode("unicode_escape", "ignore")
-        
-        # 1. Decode HTML entities
-        # Example: "Tom &amp; Jerry" → "Tom & Jerry"
+
+        # 2. Decode HTML entities like "&amp;" → "&"
         text = html.unescape(text)
-        
-        # 2. Replace incorrect unicode characters with correct ones
+
+        # 3. Re-decode misencoded Unicode characters (e.g., "Ã¼" → "ü")
         text = text.encode('latin1').decode('utf-8', "ignore")
-        
-        # 3. Normalize Unicode characters (fix ambiguous characters)
-        # Example: Converts full-width characters to standard width, ligatures to normal letters
-        # "ＡＢＣ" → "ABC", "ﬁ" → "fi"
+
+        # 4. Normalize characters (e.g., full-width → ASCII, ligatures)
         text = unicodedata.normalize("NFKC", text)
-        
-        # 4. Remove unnecessary placeholders like "<EOS> <pad>"
-        # Example: "Hello <EOS> <pad> World" → "Hello World"
-        text = re.sub(r'\s*<EOS>\s*<pad>\s*', ' ', text)
-        
-        # 5. Replace escaped newlines with actual newlines
-        # Example: "Hello\\nWorld" → "Hello\nWorld"
+
+        # 5. Fix hyphenated line-breaks: "influ-\nenced" → "influenced"
+        text = re.sub(r'(\w+)-\s*\n?\s*(\w+)', r'\1\2', text)
+
+        # 6. Replace escaped newlines: "\\n" → actual newline
         text = re.sub(r'\\n', '\n', text)
 
-        # 6. Remove long sequences of dots (3 or more in a row)
-        # Example: "Sektor . . . . . . . . . . 117–118" → "Sektor 117–118"
+        # 7. Remove long dotted sequences: ". . . . ." → " "
         text = re.sub(r"\s*\.\s*(?:\.\s*)+", " ", text)
 
-        # 7. Remove page number ranges (e.g., "[117–118]", "[25]", [ ])
-        # Example: "Technisch unvermeidbare Abwärme [121–125]" → "Technisch unvermeidbare Abwärme"
+        # 8. Remove page number ranges like "[117–125]", "[25]", "[ ]"
         text = re.sub(r"\[\s*\d+(?:[,-]\d+)*\s*\]|\[\s*\]", "", text)
 
+        # 9. Remove unnecessary placeholders like "<EOS> <pad>"
+        text = re.sub(r'\s*<EOS>\s*<pad>\s*', ' ', text)
 
-        # 8. Fix words that have been incorrectly split by spaces (common OCR issue)
-        # Example: "E n e r g y   M a n a g e m e n t" → "EnergyManagement"
+        # 10. Fix split letters (common in OCR): "E n e r g y" → "Energy"
         text = re.sub(
             r"\b([A-ZÄÖÜa-zäöüß])(?:\s+([A-ZÄÖÜa-zäöüß]))+\b",
-            lambda m: m.group(0).replace(" ", ""),  # Merge split words
+            lambda m: m.group(0).replace(" ", ""),
             text,
         )
 
-        # 9. Remove specified words (if a list of words is provided)
-        # Example: If words_to_remove = ["Technisch", "Abwärme"]
-        # "Technisch unvermeidbare Abwärme" → "unvermeidbare"
+        # 11. Remove unwanted words (if specified)
         if words_to_remove:
-            pattern = (
-                r"\b(" + "|".join(re.escape(word) for word in words_to_remove) + r")\b"
-            )
+            pattern = r"\b(" + "|".join(re.escape(w) for w in words_to_remove) + r")\b"
             text = re.sub(pattern, "", text, flags=re.IGNORECASE)
 
-        # 10. Remove excessive spaces and newlines
-        # Example: "Sektor    Technisch    unvermeidbare" → "Sektor Technisch unvermeidbare"
+        # 12. Final whitespace normalization
         text = re.sub(r"\s+", " ", text).strip()
 
         return text
-    
+
     except Exception as e:
         logger.error(f"Error cleaning text: {e}")
         return text
-        
-
-def compute_bm25_scores(documents):
-    """
-    Compute BM25 scores for each document chunk relative to all other chunks.
-    """
-    # Tokenize document chunks
-    tokenized_corpus = [doc.page_content.lower().split() for doc in documents]
-
-    # Initialize BM25 model
-    bm25 = BM25Okapi(tokenized_corpus)
-
-    # Assign BM25 scores to metadata
-    for i, doc in enumerate(documents):
-        # Compute BM25 scores for the current document against all others
-        bm25_scores = bm25.get_scores(tokenized_corpus[i])
-
-        # Store the BM25 score (taking the average for simplicity)
-        doc.metadata["bm25_score"] = float(sum(bm25_scores) / len(bm25_scores))
-
-    return documents
 
 
 def save_all_chunks_to_json(
@@ -247,8 +222,7 @@ def save_all_chunks_to_json(
                 "text": doc.page_content,
                 "source": doc.metadata.get("source", "Unknown Source"),
                 "chunk_num": doc.metadata.get("chunk_num", 0),
-                "bm25_score": doc.metadata.get("bm25_score", 0),
-                "keywords": doc.metadata.get("keywords", []),
+                # "embeddings": doc.metadata.get("embedding", []),
             }
             for doc in chunk_subset
         ]
