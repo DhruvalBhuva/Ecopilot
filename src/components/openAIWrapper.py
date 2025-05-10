@@ -3,6 +3,7 @@ import tiktoken
 import openai
 from src.logger import logger
 from openai import OpenAI
+from openai import AzureOpenAI
 from src.load_config import LoadConfig
 
 config_loader = LoadConfig()
@@ -25,9 +26,14 @@ class OpenAIWrapper:
                              Note: This is deprecated and will be removed in the future.
         """
         self.api_key = config_loader.OPENAI_API_KEY
-        self.client = OpenAI(api_key=self.api_key)
+        # self.client = OpenAI(api_key=self.api_key)
+        self.client = AzureOpenAI(
+            api_key=config_loader.azure_openai_api_key,
+            azure_endpoint=config_loader.azure_openai_api_base,
+            api_version=config_loader.azure_openai_api_version,
+        )
         self.embedding_model_name = embedding_model_name
-        self.return_torch = return_torch  # Deprecated, kept for backward compatibility
+        self.return_torch = return_torch 
         self.tokenizer = tiktoken.encoding_for_model(embedding_model_name)
         self.llm_model_name = llm_model_name
         self.temperature = temperature
