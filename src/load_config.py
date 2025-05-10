@@ -28,6 +28,7 @@ class LoadConfig:
         self._init_data_sources()
         self._init_directories_vars()
         self._init_data_preprocessing_vars()
+        self._init_azure_vars()
 
         if self.app_config["vector_db"]["active"] == "pinecone":
             self._init_pinecone_vars()
@@ -35,7 +36,7 @@ class LoadConfig:
             self._init_postgresql_vars()
 
         self._init_embeddings_vars()
-        # self._init_llm_vars()
+        self._init_llm_vars()
 
     def _init_env_vars(self) -> None:
         self.PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
@@ -68,6 +69,12 @@ class LoadConfig:
         self.chunk_size = data_config["chunking"]["chunk_size"]
         self.chunk_overlap = data_config["chunking"]["chunk_overlap"]
 
+    def _init_azure_vars(self) -> None:
+        """Initialize Azure configuration if active."""
+        self.azure_openai_api_key = os.getenv("AZURE_OPENAI_API_KEY")
+        self.azure_openai_api_base = os.getenv("AZURE_OPENAI_ENDPOINT")
+        self.azure_openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
+            
     def _init_embeddings_vars(self) -> None:
         """Initialize embedding model configuration"""
         emb_config = self.app_config["embedding_models"]
@@ -101,11 +108,18 @@ class LoadConfig:
     def _init_llm_vars(self) -> None:
         """Initialize Language Model configuration."""
         llm_config = self.app_config["language_models"]
-        self.llm_models = llm_config["models"]
 
-        self.llm_active_models = llm_config["active_model"]
+        active_model = llm_config["active_model"]
+        active_model_configs = llm_config["models"][active_model]
+        
+        self.llm_model_name = active_model_configs["model_name"]
+        self.llm_api_key = active_model_configs["api_key"]
+        self.llm_temperature = active_model_configs["temperature"]
+        self.llm_max_tokens = active_model_configs["max_tokens"]
+        self.llm_top_p = active_model_configs["top_p"]
+        
         self.llm_models_config = {}
-        self.llm_system_role = llm_config["system_role"]
+        self.llm_system_role = llm_config["system_prompt"]
         for model, model_key in llm_config["models"].items():
             self.llm_models_config[model] = model_key
 
