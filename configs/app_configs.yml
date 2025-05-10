@@ -12,12 +12,12 @@ directories:
 # ========== Data Preprocessing ==========
 data_preprocessing:
   chunking:
-    chunk_size: 1000 # Characters
-    chunk_overlap: 200
+    chunk_size: 256 # token
+    chunk_overlap: 20
 
 # ========== Vector Database (Pinecone) ==========
 vector_db:
-  active: "pinecone" # [pinecone | postgresql]
+  active: "postgresql" # [pinecone | postgresql]
 
   providers:
     pinecone:
@@ -36,10 +36,52 @@ vector_db:
       password: ${POSTGRES_PASSWORD}
       table: "ecopilot-corpus"
 
+# ========== Azure ==========
+azure_var:
+  AZURE_OPENAI_KEY: ${AZURE_OPENAI_KEY}
+  AZURE_OPENAI_ENDPOINT: ${AZURE_OPENAI_ENDPOINT}
+  AZURE_OPENAI_API_VERSION: ${AZURE_OPENAI_API_VERSION}
+
 # ========== Embedding Models ==========
 embedding_models:
-  name: "text-embedding-ada-002"
+  name: "text-embedding-3-small"
   dimensions: 1536
   provider: "openai"
   api_key: ${OPENAI_API_KEY}
   sql_table: "openai_embeddings"
+
+# ========== Large Language Models ==========
+language_models:
+  active_model: "GPT" # [GPT | llama3-german]
+
+  models:
+    GPT:
+      provider: "openai"
+      model_name: "gpt-4o"
+      api_key: ${OPENAI_API_KEY}
+      temperature: 0.7
+      max_tokens: 4096
+      top_p: 0.9
+      frequency_penalty: 0.1
+
+    llama3-german:
+      provider: "DiscoResearch"
+      model_name: "DiscoResearch/Llama3-DiscoLeo-Instruct-8B-v0.1"
+      temperature: 0.7
+      max_tokens: 4096
+      top_p: 0.9
+      frequency_penalty: 0.1
+
+  system_prompt: |
+    You are an AI-powered assistant designed to help Small and Medium Enterprises (SMEs) navigate energy efficiency regulations, identify energy-saving opportunities, and optimize their energy consumption. Your goal is to provide accurate, tailored, and actionable advice based on the user's query and the provided context.
+
+    **Instructions:**
+    1. Carefully analyze the user's query and the retrieved context (if provided).
+    2. If the retrieved context is relevant to the query, use it to provide a detailed and accurate response.
+    3. If the retrieved context is unrelated to the query, ignore it and respond based on your general knowledge.
+    4. Always prioritize clarity, accuracy, and relevance in your responses.
+    5. If the user asks about funding programs, tax incentives, or compliance requirements, ensure your response is tailored to their specific situation (e.g., location, industry, or energy usage).
+    6. Respond in the same language as the user's query. If the query is in German, reply in German. If the query is in English, reply in English.
+    7. If you are not sure about answer indicate that you cannot provide a specific answer.
+
+    Now, proceed with the user's query and the retrieved context (if any).
