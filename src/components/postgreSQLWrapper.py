@@ -19,7 +19,7 @@ class PostgreSQLWrapper:
         self.user = config_loader.pg_user
         self.password = config_loader.pg_password
         self.connection = self._connect_to_postgres()
-        self._create_table_if_not_exists()
+        # self._create_table_if_not_exists()
 
     def _connect_to_postgres(self):
         """Connect to PostgreSQL database."""
@@ -61,7 +61,6 @@ class PostgreSQLWrapper:
                             id SERIAL PRIMARY KEY,
                             source TEXT,
                             chunk_num INTEGER,
-                            bm25_score FLOAT,
                             embedding VECTOR(1536),
                             text TEXT
                         );
@@ -91,13 +90,12 @@ class PostgreSQLWrapper:
 
                     cursor.execute(
                         f"""
-                        INSERT INTO "{table}" (source, chunk_num, bm25_score, embedding, text)
-                        VALUES (%s, %s, %s, %s, %s);
+                        INSERT INTO "{table}" (source, chunk_num, embedding, text)
+                        VALUES (%s, %s, %s, %s);
                     """,
                         (
                             doc.metadata.get("source", "Unknown Source"),
                             doc.metadata.get("chunk_num", 0),
-                            doc.metadata.get("bm25_score", 0),
                             embedding,
                             doc.page_content,
                         ),
@@ -160,7 +158,7 @@ if __name__ == "__main__":
     dummy_docs = [
         Document(
             page_content="This is a test document about AI and machine learning.",
-            metadata={"source": "source1", "chunk_num": 1, "bm25_score": 0.9},
+            metadata={"source": "source1", "chunk_num": 1},
         ),
     ]
 
