@@ -6,7 +6,6 @@ from src.components.jinaaiWrapper import JinaaiWrapper
 from src.components.data_preprocessing import (
     load_documents,
     save_all_chunks_to_json,
-    compute_bm25_scores,
 )
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 
@@ -17,9 +16,6 @@ config_loader = LoadConfig()
 logger.info("Loading documents...")
 chunked_documents = load_documents(config_loader.data_sources)
 
-# ========== BM25 Scoring ==========
-logger.info("Computing BM25 scores...")
-chunked_documents = compute_bm25_scores(chunked_documents)
 
 save_all_chunks_to_json(
     chunked_documents, config_loader.chunks_dict, max_chunks_per_file=500
