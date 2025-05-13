@@ -1,48 +1,48 @@
+import torch
+from typing import List, Dict
+from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from sklearn.preprocessing import MinMaxScaler
+import numpy as np
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 from src.components.openAIWrapper import OpenAIWrapper
 from src.load_config import LoadConfig
 from src.logger import logger
 
-from pgvector.psycopg2 import register_vector
-from sklearn.preprocessing import MinMaxScaler
-import numpy as np
-
 
 class HybridRetriever:
-    def __init__(self, postgres_wrapper: PostgreSQLWrapper, embedder: OpenAIWrapper, dense_weight: float = 0.5, sparse_weight: float = 0.5):
-        """
-        Initialize the hybrid retriever.
-
-        :param postgres_wrapper: PostgreSQLWrapper instance for database operations.
-        :param dense_weight: Weight for dense retrieval scores.
-        :param sparse_weight: Weight for sparse retrieval scores.
-        """
+    def __init__(
+        self,
+        postgres_wrapper: PostgreSQLWrapper,
+        embedder: OpenAIWrapper,
+        alpha: float = 0.5,
+        enable_reranking: bool = True,
+        reranker_model_name: str = "BAAI/bge-reranker-base",
+        device: str = "cuda",
+    ):
         self.postgres_wrapper = postgres_wrapper
         self.embedder = embedder
-        self.dense_weight = dense_weight
-        self.sparse_weight = sparse_weight
-        self.scaler = MinMaxScaler()  # For normalizing scores
+        self.alpha = alpha
+        self.enable_reranking = enable_reranking
+        self.scaler = MinMaxScaler()
+        self.device = device
+
+        if self.enable_reranking:
+            self.tokenizer = AutoTokenizer.from_pretrained(reranker_model_name)
+            self.reranker_model = AutoModelForSequenceClassification.from_pretrained(reranker_model_name).to(self.device)
+            self.reranker_model.eval()
 
     def dense_retrieval(self, query_text, top_k=10):
-        """
-        Perform dense retrieval using vector search.
-
-        :param query_embedding: Embedding of the query.
-        :param top_k: Number of top results to retrieve.
-        :return: List of documents with dense retrieval scores.
-        """
         try:
             with self.postgres_wrapper.connection.cursor() as cursor:
-                # Convert query embedding to a list and cast it to the vector type
                 query_embedding = self.embedder.embed_query(query_text)
                 cursor.execute(
-                    f"""
+                    f'''
                     SELECT id, source, chunk_num, embedding, text,
                         1 - (embedding <=> %s::vector) AS cosine_similarity
                     FROM "{self.postgres_wrapper.table}"
                     ORDER BY cosine_similarity DESC
                     LIMIT %s;
-                    """,
+                    ''',
                     (query_embedding, top_k),
                 )
                 results = cursor.fetchall()
@@ -53,7 +53,7 @@ class HybridRetriever:
                         "chunk_num": row[2],
                         "embedding": row[3],
                         "text": row[4],
-                        "dense_score": row[5],  # Cosine similarity
+                        "dense_score": row[5],
                     }
                     for row in results
                 ]
@@ -62,23 +62,18 @@ class HybridRetriever:
             raise
 
     def sparse_retrieval(self, query_text, top_k=10):
-        """
-        Perform sparse retrieval using full-text search.
-
-        :param query_text: Query text for full-text search.
-        :param top_k: Number of top results to retrieve.
-        :return: List of documents with sparse retrieval scores.
-        """
         try:
             with self.postgres_wrapper.connection.cursor() as cursor:
                 cursor.execute(
-                    f"""
-                    SELECT id, source, chunk_num, embedding, text
+                    f'''
+                    SELECT id, source, chunk_num, embedding, text,
+                        ts_rank_cd(to_tsvector('simple', text), plainto_tsquery('simple', %s)) AS rank
                     FROM "{self.postgres_wrapper.table}"
                     WHERE to_tsvector('simple', text) @@ plainto_tsquery('simple', %s)
+                    ORDER BY rank DESC
                     LIMIT %s;
-                    """,
-                    (query_text, top_k),
+                    ''',
+                    (query_text, query_text, top_k),
                 )
                 results = cursor.fetchall()
                 return [
@@ -88,7 +83,7 @@ class HybridRetriever:
                         "chunk_num": row[2],
                         "embedding": row[3],
                         "text": row[4],
-                        "sparse_score": row[5],  # BM25 score
+                        "sparse_score": row[5],
                     }
                     for row in results
                 ]
@@ -97,114 +92,90 @@ class HybridRetriever:
             raise
 
     def normalize_scores(self, dense_results, sparse_results):
-        """
-        Normalize both dense and sparse scores together.
+        dense_scores = np.array([doc["dense_score"] for doc in dense_results]).reshape(-1, 1)
+        sparse_scores = np.array([doc["sparse_score"] for doc in sparse_results]).reshape(-1, 1)
 
-        :param dense_results: List of dense retrieval results.
-        :param sparse_results: List of sparse retrieval results.
-        :return: Normalized dense and sparse scores.
-        """
-        dense_scores = np.array([doc["dense_score"] for doc in dense_results]).reshape(
-            -1, 1
-        )
-        sparse_scores = np.array(
-            [doc["sparse_score"] for doc in sparse_results]
-        ).reshape(-1, 1)
-
-        # Combine both scores for normalization
         all_scores = np.concatenate((dense_scores, sparse_scores), axis=0)
-        all_scores_normalized = self.scaler.fit_transform(all_scores).flatten()
+        normalized_scores = self.scaler.fit_transform(all_scores).flatten()
 
-        # Split back into dense and sparse normalized scores
-        dense_scores_normalized = all_scores_normalized[: len(dense_results)]
-        sparse_scores_normalized = all_scores_normalized[len(dense_results) :]
+        dense_normalized = normalized_scores[:len(dense_results)]
+        sparse_normalized = normalized_scores[len(dense_results):]
 
-        return dense_scores_normalized, sparse_scores_normalized
+        return dense_normalized, sparse_normalized
 
+    def rerank_results(self, query: str, documents: List[Dict], top_k: int = 10):
+        try:
+            pairs = [[query, doc["text"]] for doc in documents]
+            inputs = self.tokenizer(pairs, padding=True, truncation=True, return_tensors="pt").to(self.device)
 
-    def retrive(self, query_text, top_k=10, dense_weight=None, sparse_weight=None):
-        """
-        Perform hybrid retrieval by combining dense and sparse retrieval results.
+            with torch.no_grad():
+                scores = self.reranker_model(**inputs).logits.squeeze(dim=1).cpu().numpy()
 
-        :param query_text: Query text for sparse and dense retrieval.
-        :param top_k: Number of top results to retrieve.
-        :param dense_weight: Optional override for dense score weight.
-        :param sparse_weight: Optional override for sparse score weight.
-        :return: List of documents ranked by hybrid scores.
-        """
-        # Use instance-level weights if not provided
-        dense_w = dense_weight if dense_weight is not None else self.dense_weight
-        sparse_w = sparse_weight if sparse_weight is not None else self.sparse_weight
+            for doc, score in zip(documents, scores):
+                doc["reranker_score"] = float(score)
 
-        # Perform dense and sparse retrieval
+            return sorted(documents, key=lambda x: x["reranker_score"], reverse=True)[:top_k]
+
+        except Exception as e:
+            logger.error(f"Error during reranking: {e}")
+            raise
+
+    def retrive(self, query_text, top_k=10, alpha=None):
+        alpha = alpha if alpha is not None else self.alpha
+
         dense_results = self.dense_retrieval(query_text, top_k)
         sparse_results = self.sparse_retrieval(query_text, top_k)
 
-        # Handle empty sparse results
         if not sparse_results:
             logger.warning("No sparse results found. Using dense results only.")
             for doc in dense_results:
                 doc["combined_score"] = doc["dense_score"]
-            return dense_results[:top_k]
+            return self.rerank_results(query_text, dense_results[:top_k]) if self.enable_reranking else dense_results[:top_k]
 
-        # Normalize both dense and sparse scores together
-        dense_scores_normalized, sparse_scores_normalized = self.normalize_scores(
-            dense_results, sparse_results
-        )
+        dense_norm, sparse_norm = self.normalize_scores(dense_results, sparse_results)
 
-        # Combine results
         combined_results = []
         for i in range(max(len(dense_results), len(sparse_results))):
             dense_doc = dense_results[i] if i < len(dense_results) else None
             sparse_doc = sparse_results[i] if i < len(sparse_results) else None
 
-            # Calculate combined score
-            dense_score = dense_scores_normalized[i] if dense_doc else 0
-            sparse_score = sparse_scores_normalized[i] if sparse_doc else 0
-            combined_score = dense_w * dense_score + sparse_w * sparse_score
+            dense_score = dense_norm[i] if dense_doc else 0
+            sparse_score = sparse_norm[i] if sparse_doc else 0
+            combined_score = alpha * dense_score + (1 - alpha) * sparse_score
 
-            # Use the document with the highest score
-            if dense_doc and sparse_doc:
-                combined_doc = dense_doc if dense_score > sparse_score else sparse_doc
-            elif dense_doc:
-                combined_doc = dense_doc
-            else:
-                combined_doc = sparse_doc
+            # Prefer dense_doc if both exist and are equal in score
+            combined_doc = dense_doc if dense_doc and (not sparse_doc or dense_score >= sparse_score) else sparse_doc
 
             if combined_doc:
                 combined_doc["combined_score"] = combined_score
                 combined_results.append(combined_doc)
 
-        # Sort by combined score
         combined_results.sort(key=lambda x: x["combined_score"], reverse=True)
+        final_results = combined_results[:top_k]
 
-        return combined_results[:top_k]
+        return self.rerank_results(query_text, final_results) if self.enable_reranking else final_results
 
-# Example Usage
+
+# Example usage
 if __name__ == "__main__":
-    # Load config and initialize PostgreSQLWrapper
     config_loader = LoadConfig()
-    
     postgres_wrapper = PostgreSQLWrapper()
+    openai_embedder = OpenAIWrapper(embedding_model_name=config_loader.embedding_model)
 
-    openai_embedder = OpenAIWrapper(
-        embedding_model_name=config_loader.embedding_model,
-    )
-    
-    # Initialize hybrid retriever
     hybrid_retriever = HybridRetriever(
-        postgres_wrapper, openai_embedder
+        postgres_wrapper=postgres_wrapper,
+        embedder=openai_embedder,
+        alpha=0.5,  # Tune as needed
+        device=config_loader.device,
     )
-    
-    # Example query
-    query_text = "Welche Maßnahmen dürfen bayerische Kommunen im eigenen Wirkungskreis ergreifen, um erneuerbare Energien auszubauen?"
-    
-    # Perform hybrid retrieval
-    results = hybrid_retriever.retrive(query_text, top_k=10)
 
-    # Print results
+    query = "Welche Rolle spielt die OeMAG in der Förderung erneuerbarer Energien in Österreich?"
+
+    results = hybrid_retriever.retrive(query, top_k=10)
+
     for result in results:
         print(f"Source: {result['source']}, Chunk: {result['chunk_num']}")
         print(f"Text: {result['text']}")
-        print(f"Combined Score: {result['combined_score']}")
+        if "reranker_score" in result:
+            print(f"Reranker Score: {result['reranker_score']:.3f}")
         print("-" * 50)
