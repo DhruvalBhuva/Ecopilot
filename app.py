@@ -1,6 +1,5 @@
 import gradio as gr
 from src.load_config import LoadConfig
-from src.components.jinaaiWrapper import JinaaiWrapper
 from src.components.openAIWrapper import OpenAIWrapper
 from src.pipeline.RAGPipeline import RAGPipeline  # Import your RAG pipeline class
 
