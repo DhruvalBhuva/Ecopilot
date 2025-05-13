@@ -1,8 +1,6 @@
 from src.load_config import LoadConfig
 from src.logger import logger
-from src.components.pineconeWrapper import PineconeWrapper
 from src.components.openAIWrapper import OpenAIWrapper
-from src.components.jinaaiWrapper import JinaaiWrapper
 from src.components.data_preprocessing import (
     load_documents,
     save_all_chunks_to_json,
@@ -44,13 +42,5 @@ postgresql_wrapper.insert_embeddings(chunked_documents)
 
 # Close the PostgreSQL connection
 postgresql_wrapper.close_connection()
-
-# # ========== Pinecone Vector Database ==========
-# # Initialize Pinecone
-# pinecone_wrapper = PineconeWrapper(config_loader.pinecone_index)
-
-# # Insert German documents into Pinecone
-# logger.info("Inserting embeddings into Pinecone...")
-# pinecone_wrapper.upsert_documents(chunked_documents, index_name=config_loader.pinecone_index)
 
 logger.info("Pipeline completed successfully!")
