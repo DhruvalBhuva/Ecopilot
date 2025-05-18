@@ -96,7 +96,7 @@ class LoadConfig:
         vectorDB_config = self.app_config["vector_db"]
 
         if vectorDB_config.get("active") == "postgresql":
-            pg_config = vectorDB_config["providers"]["postgresql"]
+            pg_config = vectorDB_config["postgresql"]
             self.pg_host = os.getenv("POSTGRES_HOST", pg_config["host"])
             self.pg_port = int(os.getenv("POSTGRES_PORT", pg_config["port"]))
             self.pg_database = os.getenv("POSTGRES_DB", pg_config["database"])
