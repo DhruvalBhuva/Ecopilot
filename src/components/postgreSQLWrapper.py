@@ -30,6 +30,7 @@ class PostgreSQLWrapper:
                 database=self.database,
                 user=self.user,
                 password=self.password,
+                sslmode="require"  # Supabase requires SSL
             )
             register_vector(conn)  # Register pgvector extension
             return conn
@@ -112,7 +113,7 @@ class PostgreSQLWrapper:
         """
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(f"SELECT COUNT(*) FROM '{table}';")
+                cursor.execute(f'SELECT COUNT(*) FROM "{table}";')
                 total_rows = cursor.fetchone()[0]
                 return total_rows
         except Exception as e:
@@ -169,11 +170,11 @@ if __name__ == "__main__":
     # postgresql_wrapper.insert_embeddings(dummy_docs)
 
     # Get the total number of records in the table
-    # total_records = postgresql_wrapper.get_record_count(table=config_loader.jinaai_table)
-    # print(f"Total records in the table: {total_records}")
+    total_records = postgresql_wrapper.get_record_count()
+    print(f"Total records in the table: {total_records}")
 
     # Delete all records from the table
-    postgresql_wrapper.delete_records(table=config_loader.pg_table)
+    # postgresql_wrapper.delete_records(table=config_loader.pg_table)
 
     # Close the PostgreSQL connection
     postgresql_wrapper.close_connection()
