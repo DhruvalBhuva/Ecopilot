@@ -4,14 +4,13 @@ from src.logger import logger
 from src.load_config import LoadConfig
 from pgvector.psycopg2 import register_vector
 from langchain.docstore.document import Document
-from src.components.jinaaiWrapper import JinaaiWrapper
 
 
 class PostgreSQLWrapper:
 
     def __init__(self, pg_table: str = None):
         config_loader = LoadConfig()
-        
+
         self.host = config_loader.pg_host
         self.port = config_loader.pg_port
         self.database = config_loader.pg_database
@@ -30,7 +29,7 @@ class PostgreSQLWrapper:
                 database=self.database,
                 user=self.user,
                 password=self.password,
-                sslmode="require"  # Supabase requires SSL
+                sslmode="require",  # Supabase requires SSL
             )
             register_vector(conn)  # Register pgvector extension
             return conn
