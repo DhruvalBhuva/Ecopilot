@@ -1,0 +1,290 @@
+[
+    {
+        "question": "Ab welchem Endenergieverbrauch müssen Unternehmen Umsetzungspläne erstellen?",
+        "truth": ">2.5 GWh",
+        "metadata": {
+            "source": "EnEfG Gesetz (§9)",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Sind KMUs dazu verpflichtet Audits durchzuführen?",
+        "truth": "Ja",
+        "metadata": {
+            "source": "EnEfG Gesetz",
+            "answerable": "Comment: controversial, Ja laut Gesetz, nein laut Internetblog"
+        }
+    },
+    {
+        "question": "Mein Unternehmen hat einen jährlichen Energieverbrauch von mehr als 2.5 GWh aber kleiner als 7.5 GWh. Welche Maßnahmen muss ich laut EnEfG umsetzen?",
+        "truth": "Umsetzungspläne Abwärmeplattform und Abwärmevermeidung",
+        "metadata": {
+            "source": "EnEfG Gesetz",
+            "answerable": "Comment: controversial, Umsetzungspläne nur wenn Unternehmen kein KMU lautInternetblog"
+        }
+    },
+    {
+        "question": "Ab welchem Energieverbrauch muss ich an die Abwärmeplattform melden und wie viel Abwärmepotential gibt es in Deutschland?",
+        "truth": "Ab > 2.5 GWh, keine Daten zu Abwärmepotential in Deutschland",
+        "metadata": {
+            "source": "EnEfG Gesetz",
+            "answerable": "partially"
+        }
+    },
+    {
+        "question": "Ab welchem Energieverbrauch muss ich ein Energie- oder Umweltmanagementsystem umsetzen?",
+        "truth": ">7.5 GWh",
+        "metadata": {
+            "source": "EnEfG Gesetz",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Welche Bereiche zählen zum Endenergieverbrauch?",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "Zählen Leasingautos zum Endenergieverbrauch für EnEfG?",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": "unanswerable"
+        }
+    },
+    {
+        "question": "Haben die Maßnahmen des EnEfG einen negativen Einfluss auf Innovation, Digitalisierung und Wettbewerbsfähigkeit laut der Interviews?",
+        "truth": "Keinen negativen Einfluss auf Innovation und Digitalisierung Viele Unternehmen sehen langfristigen Vorteil durch Unabhängigkeit von schwankenden Energiepreisen. Zudem stärkt dies die Zusammenarbeit mit Großkunden, die vermehrt Wert auf nachhaltige Lieferketten legen. Energieeffizienzmaßnahmen können neue Geschäftsfelder eröffnen, werden aber teilweise nicht als Alleinstellungsmerkmal gesehen.",
+        "metadata": {
+            "source": "Interviews + Zusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Welche ökologischen und ökonomischen Vorteile ergeben sich aus der Umsetzung des EnEfG (laut der Interviews)?",
+        "truth": "Ökologisch: Umweltschutz, CO2 Einsparung, Klimaschutz Ökonomisch: Langfristige Kosteneinsparungen, verbesserter Wettbewerbsvorteil",
+        "metadata": {
+            "source": "Interviews + Zusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Welche Herausforderungen ergeben sich aus dem EnEfG für Unternehmen (laut der Interviews)?",
+        "truth": "",
+        "metadata": {
+            "source": "Tabelle 5 Interviewzusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Was sind Best Practices der Unternehmen?",
+        "truth": "",
+        "metadata": {
+            "source": "Tabelle 6 Interviewzusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Welche Best Pracktices werden in den Interviews thematisiert?",
+        "truth": "",
+        "metadata": {
+            "source": "Tabelle 6 Interviewzusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Was sind Handlungsempfehlungen für KMUs?",
+        "truth": "",
+        "metadata": {
+            "source": "Interviewzusammenfassung",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "Was sind die wichtigsten Paragrafen im EnEfG für Unternehmen (nicht Rechenzentren)?",
+        "truth": "§8, 9, 16, 17 für Klimaneutrale Unternehmen noch §18",
+        "metadata": {
+            "source": "EnEfG Gesetz",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "Was sind Treiber und Barrieren für Energieeffizienz für KMUs?",
+        "truth": "Barrieren: Fehlende Unterstützung durch Regierung, Fehlende Informationen/Wissen, Fehlende Expertise/Kompetenzen, Fehlendes Vertrauen in Energieexperten, Fehlende Priorität, Fehlende finanzielle Mittel, Lange Amortisierungsdauer Treiber: Gesetzliche Anforderungen, Entscheidungsträger, Energieeffizienzexperten, Vorhandene finanzielle Mittel, Selbstfinanzierung",
+        "metadata": {
+            "source": "Agrawal Paper (Challenges and opportunities for improving energy.pdf)",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "What are Best Practices of the chemical production sector, how much energy can be saved and are the best pracitces aligned with the interview best practices?",
+        "truth": "SATECMA: LED lamps & photovoltaic system ->  20% energy savings Wacker Chemie: excess/waste heat from production is supplied via district heating -> 421,000 MWh savings LEDs, PV, and Waste heat are also part of best practices of the interview partners",
+        "metadata": {
+            "source": "Gennitsaris, S., Oliveira, M. C., Vris, G., Bofilios, A., Ntinou, T., Frutuoso, A. R., ... & Dedoussis, V. (2023). Energy efficiency management in small and medium-sized enterprises: current situation, case studies and best practices. Sustainability, 15(4), 3727., Interviews",
+            "answerable": "fully"
+        }
+    },
+    {
+        "question": "I need help to create a roadmap for energy efficiency and decarbonization. My company is in Germany, what laws and regulations do I have to consider? Ask questions if you need further information.",
+        "truth": "You have to consider the energy efficiency law (EnEfG) and the EU Green Deal.  Questions: What is your total energy consumption? Are you considered a SME? What measurements have you already taken? What is your sector?",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    },
+    {
+        "question": "",
+        "truth": "",
+        "metadata": {
+            "source": "",
+            "answerable": ""
+        }
+    }
+]
