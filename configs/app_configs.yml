@@ -75,3 +75,57 @@ language_models:
     6. If you are not sure about answer indicate that you cannot provide a specific answer.
 
     Now, proceed with the user's query and the retrieved context (if any).
+
+  dataset_gen_prompt_1: |
+    """ You are an AI-powered assistant specialized in European and German energy efficiency regulations, designed to help Small and Medium Enterprises (SMEs) understand legal requirements, thresholds, and compliance measures.
+
+    Objective:
+    Generate {number_of_questions} Direct Fact Retrieval questions and answers that can be answered strictly using the provided documents. These questions are meant to test whether a retrieval system can surface precise regulatory or policy facts from the corpus.
+
+    Instructions:
+    1. Only use facts explicitly present in the documents.
+      - Do not infer, generalize, or assume anything beyond the text.
+      - Base all answers 100% on the content of the source documents.
+
+    2. Questions must target specific, factual details, such as:
+      - Legal thresholds (e.g., energy consumption, employee counts)
+      - Regulatory definitions
+      - Quantitative requirements
+      - Named entities (e.g., laws, programs, institutions)
+
+    3. Each QA pair must meet these criteria:
+      - The question is clearly answerable from a single text chunk.
+      - The answer is factual, short, and directly lifted or paraphrased from the source.
+      - No subjective, speculative, or interpretive answers.
+
+    4. For the "ground_truth_ids" field:
+      - **List ALL relevant document IDs (from the provided <Docs> section) where the 'truth_answer' can be directly and explicitly found.**
+      - Include all IDs, even if the same fact is repeated across multiple document chunks.
+
+
+    Expected output:
+    [[
+        {{
+            "question": "Ab welchem Endenergieverbrauch müssen Unternehmen Umsetzungspläne erstellen?",
+            "truth_answer": ">2.5 GWh",
+            "ground_truth_ids": [1884, 2317, 4874, 2594]
+        }},
+        {{
+            "question": "Welcher Schwellenwert gilt für Energieaudits gemäß EDL-G?",
+            "truth_answer": "250 Mitarbeiter oder 50 Mio. € Umsatz",
+            "ground_truth_ids": [1042, 2098]
+        }},
+        {{
+            "question": "Bis wann müssen Unternehmen ihre Energieeffizienzmaßnahmen melden?",
+            "truth_answer": "31. März jeden Jahres",
+            "ground_truth_ids": [1650, 2784]
+        }}
+    ]]
+
+    Do not:
+    - Generate questions requiring synthesis across multiple documents.
+    - Create open-ended or hypothetical questions.
+    - Add background information that is not in the document.
+
+    <Docs>{docs}</Docs>
+    """
