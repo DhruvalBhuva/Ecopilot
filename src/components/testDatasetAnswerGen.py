@@ -1,0 +1,116 @@
+import json
+from typing import List, Dict
+from src.load_config import LoadConfig
+from src.components.openAIWrapper import OpenAIWrapper
+from src.components.postgreSQLWrapper import PostgreSQLWrapper
+from src.components.postgreSQLRetriever import HybridRetriever
+from src.pipeline.RAGPipeline import RAGPipeline
+
+
+class TestDatasetAnswerGenerator:
+    def __init__(self):
+        config_loader = LoadConfig()
+        self.rag_pipeline = RAGPipeline(top_k=10)
+        self.device = config_loader.device
+
+        self.openai_wrapper = OpenAIWrapper()
+
+        self.postgres_wrapper = PostgreSQLWrapper()
+
+        self.hybrid_retriever = HybridRetriever(
+            self.postgres_wrapper,
+            self.openai_wrapper,
+            enable_reranking=True,
+            device=self.device,
+        )
+
+    def get_retrieved_docs(self, question: str) -> List[Dict]:
+        """
+        Retrieve documents for the given question.
+        """
+        try:
+            # Retrieve documents using the hybrid retriever
+            retrieved_docs = self.hybrid_retriever.dense_retrieval(question, top_k=5)
+            return [{"id": doc["id"], "text": doc["text"]} for doc in retrieved_docs]
+        except Exception as e:
+            print(f"Error retrieving documents for question '{question}': {e}")
+            return []
+
+    def generate_answers(self, question: str) -> Dict:
+        """
+        Generate answers and retrieve documents for the given question.
+        """
+        try:
+            # Retrieve reranked documents and answers
+            gpt_result = self.rag_pipeline.response(query=question, model="GPT")
+            # llama_result = self.rag_pipeline.response(query=question, model="Llama3")
+
+            # retrieved_docs = [
+            #     {"id": doc["id"], "text": doc["text"]}
+            #     for doc in gpt_result.get("reranked_documents", [])
+            # ]
+            # retrieved_docs = self.get_retrieved_docs(question)
+
+            return {
+                # "retrieved_documents": retrieved_docs,
+                "gpt_generated_answer": gpt_result.get("answer", ""),
+                # "llama_generated_answer": llama_result.get("answer", ""),
+            }
+
+        except Exception as e:
+            print(f"Error generating data for question '{question}': {e}")
+            return {
+                "retrieved_documents": [],
+                "gpt_generated_answer": "",
+                "llama_generated_answer": "",
+            }
+
+    def process_test_data(self, input_file: str, output_file: str):
+        """
+        Process the input dataset, generate answers, and save in the desired format.
+        """
+        try:
+            with open(input_file, "r", encoding="utf-8") as f:
+                test_data = json.load(f)
+
+            updated_data = []
+            for entry in test_data:
+                question = entry.get("question", "")
+                truth_answer = entry.get("truth_answer", "")
+                truth_answer_ids = entry.get("truth_answer_ids", [])
+                retrieved_documents = entry.get("retrieved_documents", [])
+                meta_data = entry.get("meta_data", {})
+
+                if not question.strip():
+                    print("Warning: Empty question found, skipping entry.")
+                    continue
+
+                generated_data = self.generate_answers(question)
+
+                updated_entry = {
+                    "question": question,
+                    "truth_answer": truth_answer,
+                    "truth_answer_ids": truth_answer_ids,
+                    "retrieved_documents": retrieved_documents,
+                    "gpt_generated_answer": generated_data["gpt_generated_answer"],
+                    # "llama_generated_answer": generated_data["llama_generated_answer"],
+                    "meta_data": meta_data,
+                }
+
+                updated_data.append(updated_entry)
+
+            with open(output_file, "w", encoding="utf-8") as f:
+                json.dump(updated_data, f, ensure_ascii=False, indent=4)
+
+            print(f"Test dataset generated and saved to {output_file}")
+
+        except Exception as e:
+            print(f"Error processing test dataset: {e}")
+
+
+# Example usage
+if __name__ == "__main__":
+    test_data_generator = TestDatasetAnswerGenerator()
+    input_file_path = "dataset/test/retriver/generated_answer_overall.json"
+    output_file_path = "dataset/test/generated_gpt_answers.json"
+    test_data_generator.process_test_data(input_file_path, output_file_path)

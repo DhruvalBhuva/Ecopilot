@@ -34,8 +34,14 @@ class PostgreSQLWrapper:
             register_vector(conn)  # Register pgvector extension
             return conn
         except Exception as e:
-            logger.error(f"Error connecting to PostgreSQL: {e}")
+            logger.error0(f"Error connecting to PostgreSQL: {e}")
             raise
+
+    def close_connection(self):
+        """Close the PostgreSQL connection."""
+        if self.connection:
+            self.connection.close()
+            logger.info("PostgreSQL connection closed.")
 
     def _create_table_if_not_exists(self):
         """Create the table if it doesn't exist."""
@@ -74,6 +80,26 @@ class PostgreSQLWrapper:
                     )
         except Exception as e:
             logger.error(f"Error creating or checking table: {e}")
+            raise
+
+    def run_query(self, query, params=None):
+        """
+        Run a custom SQL query on the PostgreSQL database.
+        """
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(query, params or ())
+
+                # Only SELECT and similar queries have descriptions
+                if cursor.description:
+                    columns = [desc[0] for desc in cursor.description]
+                    rows = cursor.fetchall()
+                    return [dict(zip(columns, row)) for row in rows]
+                else:
+                    self.connection.commit()  # Required for INSERT/UPDATE/DELETE
+                    return [{"status": "success", "rows_affected": cursor.rowcount}]
+        except Exception as e:
+            logger.error(f"Error executing query: {e}")
             raise
 
     def insert_embeddings(self, documents, table="ecopilot-corpus"):
@@ -144,12 +170,6 @@ class PostgreSQLWrapper:
         except Exception as e:
             logger.error(f"Error deleting records: {e}")
             raise
-
-    def close_connection(self):
-        """Close the PostgreSQL connection."""
-        if self.connection:
-            self.connection.close()
-            logger.info("PostgreSQL connection closed.")
 
 
 if __name__ == "__main__":

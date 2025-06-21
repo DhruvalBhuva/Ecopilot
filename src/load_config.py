@@ -74,7 +74,7 @@ class LoadConfig:
         self.azure_openai_api_key = os.getenv("AZURE_OPENAI_API_KEY")
         self.azure_openai_api_base = os.getenv("AZURE_OPENAI_ENDPOINT")
         self.azure_openai_api_version = os.getenv("AZURE_OPENAI_API_VERSION")
-            
+
     def _init_embeddings_vars(self) -> None:
         """Initialize embedding model configuration"""
         emb_config = self.app_config["embedding_models"]
@@ -101,8 +101,7 @@ class LoadConfig:
             self.pg_port = int(os.getenv("POSTGRES_PORT", pg_config["port"]))
             self.pg_database = os.getenv("POSTGRES_DB", pg_config["database"])
             self.pg_user = os.getenv("POSTGRES_USER", pg_config["user"])
-            self.pg_password = os.getenv(
-                "POSTGRES_PASSWORD", pg_config["password"])
+            self.pg_password = os.getenv("POSTGRES_PASSWORD", pg_config["password"])
             self.pg_table = pg_config["table"]
 
     def _init_llm_vars(self) -> None:
@@ -111,15 +110,18 @@ class LoadConfig:
 
         active_model = llm_config["active_model"]
         active_model_configs = llm_config["models"][active_model]
-        
+
         self.llm_model_name = active_model_configs["model_name"]
         self.llm_api_key = active_model_configs["api_key"]
         self.llm_temperature = active_model_configs["temperature"]
         self.llm_max_tokens = active_model_configs["max_tokens"]
         self.llm_top_p = active_model_configs["top_p"]
-        
+
         self.llm_models_config = {}
         self.llm_system_role = llm_config["system_prompt"]
+        self.dataset_gen_prompt_1 = llm_config["dataset_gen_prompt_1"]
+        self.dataset_gen_prompt_2 = llm_config["dataset_gen_prompt_2"]
+        self.dataset_gen_prompt_3 = llm_config["dataset_gen_prompt_3"]
         for model, model_key in llm_config["models"].items():
             self.llm_models_config[model] = model_key
 
@@ -131,4 +133,4 @@ class LoadConfig:
 if __name__ == "__main__":
     config_loader = LoadConfig()
 
-    print(config_loader.pinecone_api_key)
+    print(config_loader.dataset_gen_prompt_2)

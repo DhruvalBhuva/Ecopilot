@@ -8,12 +8,13 @@ from src.load_config import LoadConfig
 
 config_loader = LoadConfig()
 
+
 class OpenAIWrapper:
 
     def __init__(
         self,
-        embedding_model_name="text-embedding-ada-002",
-        llm_model_name="o1-mini",
+        embedding_model_name=config_loader.embedding_model,
+        llm_model_name=config_loader.llm_model_name,
         temperature=0.7,
         return_torch=True,
     ):
@@ -33,7 +34,7 @@ class OpenAIWrapper:
             api_version=config_loader.azure_openai_api_version,
         )
         self.embedding_model_name = embedding_model_name
-        self.return_torch = return_torch 
+        self.return_torch = return_torch
         self.tokenizer = tiktoken.encoding_for_model(embedding_model_name)
         self.llm_model_name = llm_model_name
         self.temperature = temperature
@@ -52,8 +53,7 @@ class OpenAIWrapper:
             embeddings = [embedding.embedding for embedding in response.data]
 
             # convert to float
-            embeddings = [[float(x) for x in embedding]
-                          for embedding in embeddings]
+            embeddings = [[float(x) for x in embedding] for embedding in embeddings]
 
             if self.return_torch:
                 return torch.tensor(embeddings)[0]
@@ -101,10 +101,9 @@ class OpenAIWrapper:
 
         # Process texts in batches
         for i in range(0, len(texts), batch_size):
-            batch = texts[i: i + batch_size]
+            batch = texts[i : i + batch_size]
             # Tokenize the batch
-            batch_token_counts = [len(self.tokenizer.encode(text))
-                                  for text in batch]
+            batch_token_counts = [len(self.tokenizer.encode(text)) for text in batch]
             token_counts.extend(batch_token_counts)
 
         return sum(token_counts)
@@ -120,10 +119,30 @@ class OpenAIWrapper:
         try:
             chat_completion = self.client.chat.completions.create(
                 messages=[
+                    {"role": "system", "content": config_loader.llm_system_role},
                     {
-                        "role": "system",
-                        "content": config_loader.llm_system_role
+                        "role": "user",
+                        "content": prompt,
                     },
+                ],
+                model=self.llm_model_name,
+            )
+            return chat_completion.choices[0].message.content
+        except Exception as e:
+            logger.error(f"Error generating text: {e}")
+            return None
+
+    def dataset_question_gen(self, prompt, max_tokens=100):
+        """
+        Generate text based on a prompt using OpenAI's language model.
+
+        :param prompt: The prompt text.
+        :param max_tokens: The maximum number of tokens to generate (default: 100).
+        :return: The generated text.
+        """
+        try:
+            chat_completion = self.client.chat.completions.create(
+                messages=[
                     {
                         "role": "user",
                         "content": prompt,
@@ -142,9 +161,7 @@ if __name__ == "__main__":
     config_loader = LoadConfig()
 
     # Initialize OpenAI embedding model with PyTorch support
-    openai_embedder = OpenAIWrapper(
-        embedding_model_name=config_loader.embedding_model,
-    )
+    openai_embedder = OpenAIWrapper()
 
     # Test embedding
     # print("Query Embedding (Torch):", openai_embedder.embed_query("Hello, world!"))
@@ -157,6 +174,6 @@ if __name__ == "__main__":
     #     openai_embedder.count_tokens(["This is a test document."]),
     # )
 
-    # prompt = "Explain the role of OeMAG in promoting renewable energy in Austria."
-    # generated_text = openai_embedder.text_generator(prompt)
-    # print("Generated Text:", generated_text)
+    prompt = "Explain the role of OeMAG in promoting renewable energy in Austria."
+    generated_text = openai_embedder.text_generator(prompt)
+    print("Generated Text:", generated_text)

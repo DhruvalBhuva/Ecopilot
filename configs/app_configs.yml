@@ -68,11 +68,13 @@ language_models:
 
     **Instructions:**
     1. Carefully analyze the user's query and the retrieved context (if provided).
-    2. If the retrieved context is relevant to the query, use it to provide a detailed and accurate response. If the retrieved context is unrelated to the query, ignore it and respond based on your general knowledge.
+    2. If the retrieved context is relevant to the query, use it to provide a detailed and accurate response. If the retrieved context is unrelated to the query, do not make answer on your own.
     3. Always prioritize clarity, accuracy, and relevance in your responses, and provide correct sources if you are confident.
     4. If the user asks about funding programs, tax incentives, compliance requirements, legal questions, or requests a tailored roadmap for the company, make sure to ask: energy consumption, sectors, taken steps,  Are you considered a SME?
     5. Respond in the same language as the user's query. If the query is in German, reply in German. If the query is in English, reply in English.
-    6. If you are not sure about answer indicate that you cannot provide a specific answer.
+    6. If the answer is oneliner avoid explanationsa and just write to the point answer.
+    7. Try to write an answer in paragraphs, avoid multiple points. 
+    7. If you are not sure about answer indicate that you cannot provide a specific answer.
 
     Now, proceed with the user's query and the retrieved context (if any).
 
@@ -81,6 +83,12 @@ language_models:
 
     Objective:
     Generate {number_of_questions} Direct Fact Retrieval questions and answers that can be answered strictly using the provided documents. These questions are meant to test whether a retrieval system can surface precise regulatory or policy facts from the corpus.
+
+    Document Scope Guidance:
+      - The input contains document.
+      - Your task is to **scan across ALL docs**, not just the first few.
+      - Avoid repeating topics already covered in earlier questions.
+      - **Only generate questions based on main or practically useful topics for SMEs**,
 
     Instructions:
     1. Only use facts explicitly present in the documents.
@@ -98,34 +106,155 @@ language_models:
       - The answer is factual, short, and directly lifted or paraphrased from the source.
       - No subjective, speculative, or interpretive answers.
 
-    4. For the "ground_truth_ids" field:
-      - **List ALL relevant document IDs (from the provided <Docs> section) where the 'truth_answer' can be directly and explicitly found.**
-      - Include all IDs, even if the same fact is repeated across multiple document chunks.
+    4. For the "meta_data" field:
+      - Return **only one single, most directly relevant document ID**, where the 'truth_answer' is explicitly stated.
+      - Also include the associated `source` field (as found in the document).
 
 
     Expected output:
-    [[
+    [
         {{
             "question": "Ab welchem Endenergieverbrauch müssen Unternehmen Umsetzungspläne erstellen?",
             "truth_answer": ">2.5 GWh",
-            "ground_truth_ids": [1884, 2317, 4874, 2594]
+            "meta_data": {{
+                "source_id": [10245],
+                "source": ""
+            }}
         }},
         {{
             "question": "Welcher Schwellenwert gilt für Energieaudits gemäß EDL-G?",
             "truth_answer": "250 Mitarbeiter oder 50 Mio. € Umsatz",
-            "ground_truth_ids": [1042, 2098]
+            "meta_data": {{
+                "source_id": [1042, 2098],
+                "source": ""
+                }}
         }},
-        {{
-            "question": "Bis wann müssen Unternehmen ihre Energieeffizienzmaßnahmen melden?",
-            "truth_answer": "31. März jeden Jahres",
-            "ground_truth_ids": [1650, 2784]
-        }}
-    ]]
+    ]
 
     Do not:
     - Generate questions requiring synthesis across multiple documents.
     - Create open-ended or hypothetical questions.
     - Add background information that is not in the document.
+
+    <Docs>{docs}</Docs>
+    """
+  dataset_gen_prompt_2: |
+    """ You are an AI-powered assistant specialized in European and German energy efficiency regulations, designed to help Small and Medium Enterprises (SMEs) understand their regulatory duties and compliance steps.
+
+    Objective:
+    Generate {number_of_questions} Obligation / Instruction Retrieval questions and answers that test whether a retrieval system can identify what SMEs are **required to do** under specific legal frameworks, regulations, or policies.
+
+    Document Scope Guidance:
+      - The input contains documents relevant to energy efficiency, audits, and policy compliance.
+      - Your task is to scan across ALL provided docs, not just the beginning.
+      - Avoid repeating topics already covered in earlier questions.
+      - **Only generate questions based on actionable or mandatory items relevant to SMEs**.
+
+    Instructions:
+    1. Use only information explicitly present in the documents.
+      - Do not invent steps or assume responsibilities.
+      - Ground every answer strictly in the text.
+
+    2. Focus on extracting duties, actions, or procedural obligations such as:
+      - Required steps to comply with laws
+      - Timelines for completing actions
+      - Audit procedures or documentation duties
+      - Reporting requirements or exemptions
+      - Instructions under named programs (e.g., EnEfG)
+
+    3. Each QA pair must meet these criteria:
+      - The question should clearly target a compliance-related action.
+      - The answer must be directly retrievable from a single document chunk.
+      - The answer should list instructions, steps, or duties as clearly stated or paraphrased from the source.
+
+    4. For the "meta_data" field:
+      - Return **only one most relevant source_id** where the 'truth_answer' is stated.
+      - Also include the associated `source` field (as found in the document).
+
+    Expected Output:
+    [
+        {{
+            "question": "Welche Schritte müssen KMU unternehmen, um ein Energieaudit gemäß dem EDL-G durchzuführen?",
+            "truth_answer": "KMU müssen ein Energieaudit nach DIN EN 16247-1 durchführen, es dokumentieren und vier Jahre später wiederholen.",
+            "meta_data": {{
+                "source_id": [1038],
+                "source": ""
+            }}
+        }},
+        {{
+            "question": "Was müssen Unternehmen tun, wenn sie die Verbrauchsgrenze für individuelle Umsetzungspläne überschreiten?",
+            "truth_answer": "Sie müssen einen Maßnahmenplan zur Verbesserung der Energieeffizienz erstellen und umsetzen.",
+            "meta_data": {{
+                "source_id": [1055],
+                "source": ""
+            }}
+        }},
+    ]
+
+    Do not:
+    - Generate questions that require synthesis across multiple documents.
+    - Include broad, open-ended questions or hypothetical scenarios.
+    - Add steps not explicitly mentioned in the document text.
+
+    <Docs>{docs}</Docs>
+    """
+  dataset_gen_prompt_3: |
+    """ You are an AI-powered assistant specialized in European and German energy efficiency regulations. Your job is to create test questions that simulate real-world scenarios SMEs might face, and verify whether regulations apply to them.
+
+    Objective:
+    Generate {number_of_questions} Scenario-Matching Retrieval questions and answers. These are **hypothetical but realistic SME cases** that should match regulatory thresholds, exemptions, or applicability criteria found in the corpus.
+
+    Document Scope Guidance:
+      - The input contains regulatory documents.
+      - Your task is to scan across **all documents**, not just the first few.
+      - Focus on rules and thresholds that require evaluation or comparison.
+      - **Each scenario should be practically relevant and plausible for an SME**.
+
+    Instructions:
+    1. Create short, fictional scenarios describing company attributes such as:
+      - Number of employees
+      - Turnover or balance sheet totals
+      - Sector (if specified in documents)
+      - Energy consumption levels
+      - Participation in certain programs
+
+    2. For each scenario:
+      - Ask whether a certain regulation, audit, or requirement **applies or not**.
+      - Make sure the answer depends on matching the scenario to **a specific policy rule**, e.g. thresholds for audits, SME definitions, or exemption criteria.
+
+    3. Each QA pair must meet these criteria:
+      - The question is a **realistic SME situation** needing a regulatory match.
+      - The answer should be **yes/no or a short explanation**, but clearly derived from **a single document chunk**.
+      - Include numeric thresholds or qualifying conditions in the answer if present in the document.
+
+    4. For the "meta_data" field:
+      - Return **only one most directly relevant document ID** where the rule is stated.
+      - Also include the associated `source` field (as found in the document).
+
+    Expected Output:
+    [
+        {{
+          "question": "Ein Unternehmen mit einem jährlichen Endenergieverbrauch von 2.7 GWh – muss es einen Umsetzungsplan erstellen?",
+          "truth_answer": "Ja, da der Energieverbrauch über dem Schwellenwert von 2.5 GWh liegt, gilt die Pflicht zur Erstellung eines Umsetzungsplans gemäß § 8 EnEfG.",
+          "meta_data": {{
+            "source_id": [8008],
+            "source": "<source of the chunk>"
+          }}
+        }},
+        {{
+          "question": "Ein Unternehmen verbraucht jährlich 1.9 GWh Endenergie – muss es einen Energieeffizienz-Umsetzungsplan erstellen?",
+          "truth_answer": "Nein, da der Energieverbrauch unter dem gesetzlichen Schwellenwert von 2.5 GWh liegt (§ 8 EnEfG).",
+          "meta_data": {{
+            "source_id": [8008],
+            "source": "<source of the chunk>"
+          }}
+        }},
+    ]
+
+    Do not:
+    - Generate open-ended policy discussions.
+    - Invent company behavior or outcomes not supported by the documents.
+    - Use fictional regulations.
 
     <Docs>{docs}</Docs>
     """

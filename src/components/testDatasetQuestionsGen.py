@@ -1,6 +1,4 @@
 import json
-import numpy as np
-import psycopg2
 import traceback
 from src.load_config import LoadConfig
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
@@ -61,9 +59,9 @@ if __name__ == "__main__":
         docs_json_string = get_docs(postgresql_wrapper, sql_query)
 
         number_of_questions = 10
-        final_prompt = config_loader.dataset_gen_prompt_1.format(
-            docs= docs_json_string,
-            number_of_questions=number_of_questions)
+        final_prompt = config_loader.dataset_gen_prompt_3.format(
+            docs=docs_json_string, number_of_questions=number_of_questions
+        )
 
         # print("\n--- Generated Prompt with Docs ---")
         # print(final_prompt)
@@ -76,9 +74,9 @@ if __name__ == "__main__":
         is_save = True
         if is_save:
             # Save the generated questions to a file
-            with open("generated_questions.txt", "w", encoding="utf-8") as file:
+            with open("generated_questions.json", "w", encoding="utf-8") as file:
                 file.write(questions)
-            print("Generated questions saved to 'generated_questions.txt'.")
+            print("Generated questions saved to 'generated_questions.json'.")
 
     except Exception as e:
         print(f"An unexpected error occurred during prompt generation: {e}")

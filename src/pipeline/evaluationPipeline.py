@@ -1,12 +1,13 @@
 import os
 import json
-from typing import List, Dict, Optional
-from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
-from nltk.translate.meteor_score import meteor_score
-from rouge_score import rouge_scorer
 import evaluate
 import numpy as np
 from collections import defaultdict
+from rouge_score import rouge_scorer
+from nltk.tokenize import word_tokenize
+from typing import List, Dict, Optional
+from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
+from nltk.translate.meteor_score import meteor_score
 
 
 class RAGEvaluator:
@@ -15,6 +16,13 @@ class RAGEvaluator:
         self.rouge = rouge_scorer.RougeScorer(["rougeL"], use_stemmer=True)
         self.smoothie = SmoothingFunction().method4
         self.bert_score = evaluate.load("bertscore")
+
+    def compute_hit_rate_at_k(
+        self, relevant_ids: List[int], retrieved_ids: List[int], k: int
+    ) -> float:
+        """Compute whether any relevant document is in the top-k retrieved documents"""
+        retrieved_k = retrieved_ids[:k]
+        return 1.0 if any(doc_id in relevant_ids for doc_id in retrieved_k) else 0.0
 
     def compute_precision_at_k(
         self, relevant_ids: List[int], retrieved_ids: List[int], k: int
@@ -51,43 +59,46 @@ class RAGEvaluator:
         return dcg / idcg if idcg > 0 else 0.0
 
     def evaluate_retrieval(
-        self, test_data: List[Dict], k_values: List[int] = [1, 3, 5, 10]
+        self, test_data: List[Dict], k_values: List[int] = [10]
     ) -> Dict[str, float]:
         results = defaultdict(dict)
 
         for k in k_values:
-            precisions, recalls, ndcgs = [], [], []
+            precisions, recalls, ndcgs, hit_rates = [], [], [], []
             mrrs = []  # MRR doesn't depend on k
 
             for item in test_data:
                 # Skip if no ground truth or retrieved documents
-                if not item.get("ground_truth_ids") or not item.get(
+                if not item.get("truth_answer_ids") or not item.get(
                     "retrieved_documents"
                 ):
                     continue
 
-                relevant = item["ground_truth_ids"]
+                relevant = item["truth_answer_ids"]
                 retrieved = [doc["id"] for doc in item["retrieved_documents"]]
 
                 precisions.append(self.compute_precision_at_k(relevant, retrieved, k))
                 recalls.append(self.compute_recall_at_k(relevant, retrieved, k))
                 ndcgs.append(self.compute_ndcg_at_k(relevant, retrieved, k))
+                hit_rates.append(self.compute_hit_rate_at_k(relevant, retrieved, k))
 
                 # Only compute MRR once per item
                 if k == k_values[0]:
                     mrrs.append(self.compute_mrr(relevant, retrieved))
 
-            results[f"Precision@{k}"] = np.mean(precisions) if precisions else 0.0
-            results[f"Recall@{k}"] = np.mean(recalls) if recalls else 0.0
-            results[f"NDCG@{k}"] = np.mean(ndcgs) if ndcgs else 0.0
+            results[f"Precision@{k}"] = (
+                round(np.mean(precisions), 3) if precisions else 0.0
+            )
+            results[f"Recall@{k}"] = round(np.mean(recalls), 3) if recalls else 0.0
+            results[f"NDCG@{k}"] = round(np.mean(ndcgs), 3) if ndcgs else 0.0
+            results[f"HitRate@{k}"] = round(np.mean(hit_rates), 3) if hit_rates else 0.0
 
             if k == k_values[0]:
-                results["MRR"] = np.mean(mrrs) if mrrs else 0.0
+                results["MRR"] = round(np.mean(mrrs), 3) if mrrs else 0.0
 
         return dict(results)
 
     def evaluate_generation(self, test_data: List[Dict]) -> Dict[str, float]:
-        # Prepare data
         references = []
         predictions = []
 
@@ -100,58 +111,77 @@ class RAGEvaluator:
         if not references or not predictions:
             return {"BLEU": 0.0, "ROUGE-L": 0.0, "METEOR": 0.0, "BERTScore": 0.0}
 
-        # Compute metrics
-        bleu_scores, rouge_l_scores, meteor_scores = [], [], []
+        # Tokenize for BLEU
+        refs_tokenized = [[word_tokenize(ref)] for ref in references]
+        preds_tokenized = [word_tokenize(pred) for pred in predictions]
 
+        # Compute Metrics
+        try:
+            bleu = corpus_bleu(
+                refs_tokenized, preds_tokenized, smoothing_function=self.smoothie
+            )
+        except:
+            bleu = 0.0
+
+        rouge_l_scores = []
+        meteor_scores = []
         for ref, pred in zip(references, predictions):
             try:
-                bleu_scores.append(
-                    sentence_bleu(
-                        [ref.split()], pred.split(), smoothing_function=self.smoothie
-                    )
-                )
-                rouge_score = self.rouge.score(ref, pred)["rougeL"].fmeasure
-                rouge_l_scores.append(rouge_score)
-                meteor_scores.append(meteor_score([ref], pred))
-            except:
-                # Skip if there's an error in calculation
+                rouge_l_scores.append(self.rouge.score(ref, pred)["rougeL"].fmeasure)
+                meteor_scores.append(
+                    meteor_score([ref], pred, language="de")
+                )  # Use "en" for English
+            except Exception as e:
+                print(f"Error calculating ROUGE/METEOR: {e}")
                 continue
 
-        # Compute BERTScore
+        # BERTScore (multilingual)
         bert = self.bert_score.compute(
             predictions=predictions,
             references=references,
-            lang="de",  # Assuming German text
+            lang="de",  # or "en"
+            model_type="bert-base-multilingual-cased",
         )
 
         return {
-            "BLEU": np.mean(bleu_scores) if bleu_scores else 0.0,
-            "ROUGE-L": np.mean(rouge_l_scores) if rouge_l_scores else 0.0,
-            "METEOR": np.mean(meteor_scores) if meteor_scores else 0.0,
-            "BERTScore": np.mean(bert["f1"]) if bert["f1"] else 0.0,
+            "BLEU": round(bleu, 4),
+            "ROUGE-L": round(np.mean(rouge_l_scores), 4) if rouge_l_scores else 0.0,
+            "METEOR": round(np.mean(meteor_scores), 4) if meteor_scores else 0.0,
+            "BERTScore": round(np.mean(bert["f1"]), 4) if bert["f1"] else 0.0,
         }
 
     def evaluate_rag(
-        self, test_data: List[Dict], k_values: List[int] = [1, 3, 5, 10]
+        self, test_data: List[Dict], k_values: List[int] = [1, 2, 3, 5, 10]
     ) -> Dict[str, Dict[str, float]]:
         return {
-            "retrieval_metrics": self.evaluate_retrieval(test_data, k_values),
+            # "retrieval_metrics": self.evaluate_retrieval(test_data, k_values),
             "generation_metrics": self.evaluate_generation(test_data),
         }
 
     def print_metrics(self, metrics: Dict[str, Dict[str, float]]):
         """Pretty print evaluation metrics"""
         print("=== Retrieval Metrics ===")
-        for metric, value in metrics["retrieval_metrics"].items():
-            print(f"{metric:15}: {value:.4f}")
+        # for metric, value in metrics["retrieval_metrics"].items():
+        #     print(f"{metric:15}: {value:.4f}")
 
-        print("\n=== Generation Metrics ===")
+        # print("\n=== Generation Metrics ===")
         for metric, value in metrics["generation_metrics"].items():
             print(f"{metric:20}: {value:.4f}")
 
+    def save_metrics_to_file(
+        self, metrics: Dict[str, Dict[str, float]], file_path: str
+    ):
+        """Save evaluation metrics to a JSON file"""
+        try:
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump(metrics, f, indent=4)
+            print(f"Metrics saved to {file_path}")
+        except IOError as e:
+            print(f"Error saving metrics to file: {e}")
+
 
 if __name__ == "__main__":
-    evaluation_data_file_path = "dataset/test/generated_test_data.json"
+    evaluation_data_file_path = "dataset/test/generator/generated_gpt_answers_2.json"
 
     try:
         with open(evaluation_data_file_path, "r", encoding="utf-8") as f:
@@ -168,3 +198,6 @@ if __name__ == "__main__":
     print("📊 Evaluating RAG System...")
     metrics = evaluator.evaluate_rag(test_data)
     evaluator.print_metrics(metrics)
+    evaluator.save_metrics_to_file(
+        metrics, "dataset/test/generator/evaluation_metrics.json"
+    )

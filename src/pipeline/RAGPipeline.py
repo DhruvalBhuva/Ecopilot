@@ -8,38 +8,37 @@ from src.components.llama3GermanWrapper import Llama3GermanWrapper
 
 import torch
 
+
 class RAGPipeline:
     def __init__(
         self,
-        top_k_per_embedder: int = 2,
-        top_k_final: int = 1,
+        top_k: int = 2,
     ):
         """
         Initialize the RAG pipeline.
 
         Args:
-            top_k_per_embedder: Number of documents to retrieve per embedder.
-            top_k_final: Number of top reranked documents to use for answer generation.
+            top_k: Number of documents to retrieve per embedder.
         """
         config_loader = LoadConfig()
 
-        self.top_k_per_embedder = top_k_per_embedder
-        self.top_k_final = top_k_final
+        self.top_k = top_k
 
         # Check for CUDA availability, use CPU if not available
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Initialize embedders
-        self.openai_embedder = OpenAIWrapper(
-            embedding_model_name=config_loader.embedding_model,
-        )
+        self.openai_embedder = OpenAIWrapper()
 
         # Initialize PostgreSQLWrapper
-        self.postgres_wrapper = PostgreSQLWrapper() 
-        
+        self.postgres_wrapper = PostgreSQLWrapper()
+
         # Initialize HybridRetriever with correct device
         self.hybrid_retriever = HybridRetriever(
-            self.postgres_wrapper, self.openai_embedder, enable_reranking=True, device=self.device
+            self.postgres_wrapper,
+            self.openai_embedder,
+            enable_reranking=True,
+            device=self.device,
         )
 
         # Initialize OpenAIWrapper for answer generation
@@ -67,9 +66,7 @@ class RAGPipeline:
         try:
             # Retrieve and rerank documents using HybridRetriever
             reranked_documents = self.hybrid_retriever.retrive(
-                query,
-                top_k=self.top_k_per_embedder,
-                alpha=0.6  # You can set or adjust alpha here
+                query, top_k=self.top_k, alpha=0.6
             )
 
             # Combine the reranked documents into a single context
@@ -107,8 +104,7 @@ if __name__ == "__main__":
 
     # Initialize RAG Pipeline
     rag_pipeline = RAGPipeline(
-        top_k_per_embedder=10,
-        top_k_final=5,
+        top_k=10,
     )
 
     # Example query
