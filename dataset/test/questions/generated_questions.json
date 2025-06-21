@@ -1,0 +1,562 @@
+[
+    {
+        "question": "Ab welchem Energieverbrauch müssen Unternehmen ihre Abwärme im Portal melden?",
+        "truth_answer": "Ab einem Energieverbrauch von 2,5 GWh oder mehr.",
+        "meta_data": {
+            "source_id": "15109",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welche Zertifizierung ist seit 2014 für eines der befragten Unternehmen relevant?",
+        "truth_answer": "ISO 50001",
+        "meta_data": {
+            "source_id": "15115",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welche Aufgabe erfüllt die Bundeszentrale für Energieeffizienz?",
+        "truth_answer": "Sie betreibt das Abwärmeportal für Unternehmen.",
+        "meta_data": {
+            "source_id": "14989",
+            "source": "Interview7_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Welche Förderprogramme wurden oftmals von Unternehmen zur Umsetzung von Energieeffizienzmaßnahmen genutzt?",
+        "truth_answer": "BAFA und EEG",
+        "meta_data": {
+            "source_id": "15126",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welche Norm wird empfohlen, wenn Energie- und Umweltmanagementsysteme synergetisch eingeführt werden?",
+        "truth_answer": "ISO 50001 und ISO 14001",
+        "meta_data": {
+            "source_id": "15118",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welcher maximale Zeitraum dauert die Genehmigung eines Antrags auf Fördermittel?",
+        "truth_answer": "Ein Jahr",
+        "meta_data": {
+            "source_id": "15124",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welche Zertifizierung strebt die Hochschule laut Interview 8 an?",
+        "truth_answer": "EMAS oder EMAS+",
+        "meta_data": {
+            "source_id": "15033",
+            "source": "Interview8_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Welche Abkürzung steht für die Plattform, auf der CO2-Daten gemeldet werden, die von Bosch verlangt werden?",
+        "truth_answer": "CDP",
+        "meta_data": {
+            "source_id": "15103",
+            "source": "Interview9_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Welches Jahr wird im Zusammenhang mit der Verteuerung von CO2 ab 2027 erwähnt?",
+        "truth_answer": "2027",
+        "meta_data": {
+            "source_id": "15093",
+            "source": "Interview9_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Wie lange ist die durchschnittliche Bearbeitungszeit für Förderprogramme laut den Interviews?",
+        "truth_answer": "Oft Monate",
+        "meta_data": {
+            "source_id": "15124",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welche Rolle erfüllen Energieberater laut den Interviews am häufigsten?",
+        "truth_answer": "Meist nur zur formalen Erfüllung von Förderantragsvoraussetzungen.",
+        "meta_data": {
+            "source_id": "15126",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Welcher Zeitraum gilt als Übergangsfrist für das Abwärmeportal?",
+        "truth_answer": "20 Monate nach Inkrafttreten des Gesetzes.",
+        "meta_data": {
+            "source_id": "15037",
+            "source": "Interview8_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Welche Methode wird erwähnt, um den Energieverbrauch in verschiedenen Gebäudekomplexen besser zu erfassen?",
+        "truth_answer": "Erweiterung der Messtechnik und Einführung von Smart Metering.",
+        "meta_data": {
+            "source_id": "15040",
+            "source": "Interview8_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Welche Schwierigkeiten bestehen bei der Implementierung der Messtechnik?",
+        "truth_answer": "Hohe Kosten und die Notwendigkeit infrastruktureller Anpassungen.",
+        "meta_data": {
+            "source_id": "15129",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Bis wann sollen Alle Unternehmen CO2-neutral sein?",
+        "truth_answer": "Bis 2045",
+        "meta_data": {
+            "source_id": "15075",
+            "source": "Interview9_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Ab welchem jährlichen Gesamtendenergieverbrauch sind Unternehmen zur Einrichtung eines Energie- oder Umweltmanagementsystems verpflichtet?",
+        "truth_answer": "Mehr als 7,5 Gigawattstunden",
+        "meta_data": {
+            "source_id": 14658,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Was ist die Einsparverpflichtung öffentlicher Stellen mit einem jährlichen Gesamtendenergieverbrauch von 1 Gigawattstunde oder mehr?",
+        "truth_answer": "2 Prozent Endenergieeinsparung pro Jahr bis 2045",
+        "meta_data": {
+            "source_id": 14650,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Bis wann müssen Unternehmen, die vor dem 18. November 2023 die Verbrauchsschwelle überschritten haben, ein Energie- oder Umweltmanagementsystem einrichten?",
+        "truth_answer": "Bis zum 18. Juli 2025",
+        "meta_data": {
+            "source_id": 14658,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Strafe kann bei einer schweren Verletzung des EnEfG (Energieeffizienzgesetz) verhängt werden?",
+        "truth_answer": "Geldbuße bis zu 100.000 Euro",
+        "meta_data": {
+            "source_id": 14675,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Mindestanforderung gilt für die Einsparung von Endenergie durch den Bund ab 2024?",
+        "truth_answer": "Jährliche Einsparung von 45 Terawattstunden",
+        "meta_data": {
+            "source_id": 14645,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Was müssen Unternehmen mit einem jährlichen Gesamtendenergieverbrauch von mehr als 2,5 Gigawattstunden erstellen?",
+        "truth_answer": "Konkrete Umsetzungspläne für wirtschaftliche Endenergieeinsparmaßnahmen",
+        "meta_data": {
+            "source_id": 14660,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Frist gilt für die Bestätigung der Richtigkeit von Umsetzungsplänen nach EnEfG?",
+        "truth_answer": "Vor der Veröffentlichung durch Zertifizierer, Umweltgutachter oder Energieauditoren",
+        "meta_data": {
+            "source_id": 14661,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Wie viel Prozent der jährlichen Endenergieeinsparung muss auf private Haushalte entfallen, denen finanzielle Mittel fehlen?",
+        "truth_answer": "Mindestens 5 Prozent",
+        "meta_data": {
+            "source_id": 14648,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ab welchem Zeitpunkt sind öffentliche Stellen mit einem Endenergieverbrauch von 1 Gigawattstunde oder mehr verpflichtet, sich durch schriftliche Vereinbarung zusammenzuschließen?",
+        "truth_answer": "Zum Zweck der Erreichung des Einsparziels",
+        "meta_data": {
+            "source_id": 14651,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Rechenzentren haben eine Pflicht zur Validierung oder Zertifizierung ab 2026?",
+        "truth_answer": "Rechenzentren mit nicht redundanter Nennanschlussleistung ab 1 Megawatt",
+        "meta_data": {
+            "source_id": 14665,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ab wann gilt die Pflicht zur Einrichtung eines Energie- oder Umweltmanagementsystems für Betreiber von Rechenzentren?",
+        "truth_answer": "Ab dem 1. Juli 2025",
+        "meta_data": {
+            "source_id": 14664,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Bis wann müssen Betreiber von Rechenzentren Informationen gemäß § 13 Absatz 1 erstmals bereitstellen?",
+        "truth_answer": "Bis zum 31. März 2024",
+        "meta_data": {
+            "source_id": 14676,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Abwärmenutzungspflicht haben Unternehmen laut EnEfG?",
+        "truth_answer": "Wiederverwendung der Abwärme entsprechend dem Stand der Technik, soweit möglich und zumutbar",
+        "meta_data": {
+            "source_id": 14670,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Unternehmen sind von der Pflicht zur Vermeidung und Nutzung von Abwärme befreit?",
+        "truth_answer": "Unternehmen mit weniger als 2,5 Gigawattstunden jährlichem Endenergieverbrauch",
+        "meta_data": {
+            "source_id": 14674,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Bis wann müssen Länder den jährlichen Gesamtendenergieverbrauch ihrer öffentlichen Stellen erstmals melden?",
+        "truth_answer": "Bis zum 1. November eines jeden Jahres über das Vorjahr",
+        "meta_data": {
+            "source_id": 14655,
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Unternehmen sind gemäß EnEfG verpflichtet, ein Energie- oder Umweltmanagementsystem einzurichten?",
+        "truth_answer": "Unternehmen mit einem jährlichen durchschnittlichen Gesamtendenergieverbrauch von mehr als 7,5 Gigawattstunden innerhalb der letzten drei abgeschlossenen Kalenderjahre sind verpflichtet, ein Energie- oder Umweltmanagementsystem einzurichten.",
+        "meta_data": {
+            "source_id": "14658",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Was müssen Unternehmen mit einem jährlichen Endenergieverbrauch über 2,5 Gigawattstunden in Bezug auf Endenergieeinsparmaßnahmen tun?",
+        "truth_answer": "Unternehmen mit einem jährlichen durchschnittlichen Gesamtendenergieverbrauch von mehr als 2,5 Gigawattstunden sind verpflichtet, innerhalb von drei Jahren konkrete, durchführbare Umsetzungspläne für alle wirtschaftlich identifizierten Endenergieeinsparmaßnahmen zu erstellen und zu veröffentlichen.",
+        "meta_data": {
+            "source_id": "14660",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Bis wann müssen Betreiber von Rechenzentren ein Energie- oder Umweltmanagementsystem einrichten?",
+        "truth_answer": "Betreiber von Rechenzentren sind verpflichtet, bis zum 1. Juli 2025 ein Energie- oder Umweltmanagementsystem einzurichten.",
+        "meta_data": {
+            "source_id": "14664",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Validierungs- oder Zertifizierungspflichten gelten für Rechenzentren mit einer Nennanschlussleistung ab 300 Kilowatt?",
+        "truth_answer": "Rechenzentren mit einer nicht redundanten Nennanschlussleistung ab 300 Kilowatt, die im Eigentum öffentlicher Träger stehen oder für diese betrieben werden, müssen ab dem 1. Januar 2026 ihr Energie- oder Umweltmanagementsystem validieren oder zertifizieren lassen.",
+        "meta_data": {
+            "source_id": "14665",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Informationspflichten haben Betreiber von Rechenzentren gemäß § 13 EnEfG?",
+        "truth_answer": "Betreiber von Rechenzentren sind verpflichtet, bis zum 31. März eines jeden Jahres Informationen über ihr Rechenzentrum gemäß Anlage 3 für das vorangegangene Kalenderjahr zu veröffentlichen und an den Bund zu übermitteln.",
+        "meta_data": {
+            "source_id": "14667",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Anforderungen gelten für Unternehmen bei der Nutzung von Abwärme?",
+        "truth_answer": "Unternehmen sind verpflichtet, die entstehende Abwärme nach dem Stand der Technik zu vermeiden und die anfallende Abwärme durch Maßnahmen zur Energieeinsparung wiederzuverwenden, soweit technisch, wirtschaftlich und betrieblich zumutbar.",
+        "meta_data": {
+            "source_id": "14669",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "In welchen Fällen sind Unternehmen von der Pflicht zur Vermeidung und Nutzung von Abwärme ausgenommen?",
+        "truth_answer": "Unternehmen, deren jährlicher durchschnittlicher Gesamtendenergieverbrauch innerhalb der letzten drei abgeschlossenen Kalenderjahre 2,5 Gigawattstunden oder weniger beträgt, sind von der Pflicht ausgenommen.",
+        "meta_data": {
+            "source_id": "14672",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Verpflichtung haben Unternehmen bei der Übermittlung von Daten zur Abwärmenutzung?",
+        "truth_answer": "Unternehmen sind verpflichtet, die Informationen zur anfallenden Abwärme bis zum 31. März eines jeden Jahres an die Bundesstelle für Energieeffizienz zu übermitteln.",
+        "meta_data": {
+            "source_id": "14673",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Kriterien gelten für die Wirtschaftlichkeit von Endenergieeinsparmaßnahmen, die Unternehmen planen müssen?",
+        "truth_answer": "Eine Maßnahme gilt als wirtschaftlich, wenn sie nach einer Wirtschaftlichkeitsbetrachtung gemäß DIN EN 17463 innerhalb maximal 50 Prozent der Nutzungsdauer einen positiven Kapitalwert erzielt, jedoch mit einer maximalen Nutzungsdauer von 15 Jahren.",
+        "meta_data": {
+            "source_id": "14660",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Welche Ausnahmen gelten für Rechenzentren in Bezug auf Energie- oder Umweltmanagementsysteme?",
+        "truth_answer": "Rechenzentren, deren wiederverwendete Energie zu mindestens 50 Prozent über ein Wärmenetz aufgenommen wird und deren durchschnittlicher jährlicher Energieverbrauch 7,5 Gigawattstunden nicht überschreitet, sind von der Pflicht zur Einrichtung eines Energie- oder Umweltmanagementsystems befreit.",
+        "meta_data": {
+            "source_id": "14665",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "What are the documentation and reporting requirements imposed on SMEs by the Energy Efficiency Act (EnEfG)?",
+        "truth_answer": "Companies are required to provide documentation, such as measures plans, and meet reporting obligations, including annual reports on energy consumption and efficiency measures implemented.",
+        "meta_data": {
+            "source_id": "14963",
+            "source": "Interview6_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "What are the energy consumption thresholds in the EnEfG for requiring public implementation plans?",
+        "truth_answer": "Companies consuming more than 2.5 GWh of total energy are required to publish implementation plans under the law.",
+        "meta_data": {
+            "source_id": "14717",
+            "source": "Interview10_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "What is required of businesses regarding the utilization of waste heat under EnEfG?",
+        "truth_answer": "Companies are required to assess, utilize, or report waste heat generated in their processes, and document whether and how it is reused.",
+        "meta_data": {
+            "source_id": "14999",
+            "source": "Interview7_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "What are the challenges in accessing financial support for energy efficiency measures as part of the EnEfG?",
+        "truth_answer": "The main challenges include high bureaucratic hurdles, extensive paperwork requirements, and long waiting times for approval, which can extend up to a year.",
+        "meta_data": {
+            "source_id": "15124",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "What type of energy or environmental management systems do companies implement to comply with EnEfG?",
+        "truth_answer": "Some companies implement ISO 50001 or ISO 14001 for structured energy and environmental management.",
+        "meta_data": {
+            "source_id": "15116",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "Which SMEs are not directly obliged by certain requirements of EnEfG?",
+        "truth_answer": "SMEs consuming less than 2.5 GWh annually are not directly obligated to publish certain plans under EnEfG.",
+        "meta_data": {
+            "source_id": "15113",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "What are the requirements for Abwärmekataster (Waste Heat Register) in companies under EnEfG?",
+        "truth_answer": "Companies are required to compile a detailed registry of waste heat amounts, categorize it, and evaluate its usability, along with submitting a report to governmental systems.",
+        "meta_data": {
+            "source_id": "14997",
+            "source": "Interview7_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Are there training or knowledge-building programs for SMEs to understand EnEfG?",
+        "truth_answer": "Yes, IHK and other regional bodies often organize workshops and programs, such as 'Energie Herbsttage' or energy efficiency meetings.",
+        "meta_data": {
+            "source_id": "15043",
+            "source": "Interview8_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "What is the role of BAFA in assisting companies to comply with EnEfG?",
+        "truth_answer": "BAFA provides funding programs for energy-efficient technologies and measures, such as systems for energy monitoring and optimized pumping systems.",
+        "meta_data": {
+            "source_id": "15026",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "What methods are recommended for evaluating the CO2 footprint of products as part of EnEfG requirements?",
+        "truth_answer": "Stakeholders suggested that software tools could assist in calculating CO2 product footprints accurately and uniformity, but current standards and practices are unclear.",
+        "meta_data": {
+            "source_id": "15073",
+            "source": "Interview9_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "A company with an energy consumption of 4.2 GWh annually — is it required to conduct and publish energy efficiency implementation plans?",
+        "truth_answer": "Yes, under the Energy Efficiency Act (EnEfG), companies with energy consumption between 2.5 to 7.5 GWh are required to publish energy efficiency implementation plans.",
+        "meta_data": {
+            "source_id": "14718",
+            "source": "Interview10_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "A company with a yearly energy consumption of 1.8 GWh wants to know if it falls under mandatory energy audits per EnEfG guidelines.",
+        "truth_answer": "No, companies consuming less than 2.5 GWh annually are not required to conduct mandatory energy audits under the EnEfG.",
+        "meta_data": {
+            "source_id": "14718",
+            "source": "Interview10_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Is a company using 8 GWh of mixed gas and electricity bound by additional reporting and audits under EnEfG?",
+        "truth_answer": "Yes, companies with energy consumption above 7.5 GWh are subject to stricter obligations, including detailed audits and implementation plans.",
+        "meta_data": {
+            "source_id": "14960",
+            "source": "Interview6_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "If a business installs a photovoltaic system covering 60% of its demand, does it influence its EnEfG compliance?",
+        "truth_answer": "While a photovoltaic system aids in reducing CO2 emissions, it does not alter reporting thresholds; compliance mainly hinges on total energy consumption levels.",
+        "meta_data": {
+            "source_id": "14961",
+            "source": "Interview6_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "For a building used for industrial purposes built before 2000, are energy audits on heat insulation required?",
+        "truth_answer": "Energy audits or evaluations might be suggested for efficiency but are not mandated solely based on building age under EnEfG.",
+        "meta_data": {
+            "source_id": "14701",
+            "source": "Interview10_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "If regional energy networks don't provide biogas access, does it exempt local businesses from EnEfG binding efficiency upgrades?",
+        "truth_answer": "No, lack of access to certain energies like biogas does not exempt companies; they are still expected to optimize available energy resources.",
+        "meta_data": {
+            "source_id": "14931",
+            "source": "Interview5_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "A business states its premises are rented. Would complying with energy-saving measures apply evenly to tenant firms?",
+        "truth_answer": "While tenants can adopt measures such as energy-efficient equipment, overall building-related upgrades like insulation typically remain with landlords.",
+        "meta_data": {
+            "source_id": "15095",
+            "source": "Interview9_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Are SMEs required to invest in smart metering as part of EnEfG due diligence?",
+        "truth_answer": "Not immediately mandatory for all SMEs unless they surpass key thresholds, but smart metering increasingly supports accurate internal monitoring.",
+        "meta_data": {
+            "source_id": "15040",
+            "source": "Interview8_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Do certification standards like ISO 14001 fully substitute specific EnEfG reporting obligations?",
+        "truth_answer": "While certifications like ISO 14001 demonstrate structured eco-management, companies must ensure direct compliance with specific EnEfG clauses.",
+        "meta_data": {
+            "source_id": "15115",
+            "source": "Interview_Zusammenfassung.pdf"
+        }
+    },
+    {
+        "question": "For manufacturing companies handling more than 200 employees, how stringent is adherence to Section 8 (energy plans)?",
+        "truth_answer": "The obligation strictly follows energy consumption metrics rather than employee count; adherence is measured against if above 2.5 GWh energy yearly.",
+        "meta_data": {
+            "source_id": "14917",
+            "source": "Interview5_verarbeitet.pdf"
+        }
+    },
+    {
+        "question": "Ein Unternehmen hat einen jährlichen Gesamtendenergieverbrauch von 8 GWh. Ist es verpflichtet, ein Energie- oder Umweltmanagementsystem einzurichten?",
+        "truth_answer": "Ja, da das Unternehmen mit einem jährlichen Gesamtendenergieverbrauch von mehr als 7,5 GWh gemäß § 8 Absatz 1 EnEfG verpflichtet ist, ein Energie- oder Umweltmanagementsystem einzurichten.",
+        "meta_data": {
+            "source_id": "14658",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen hat einen jährlichen Energieverbrauch von 2,3 GWh. Muss es einen Umsetzungsplan zur Reduktion von Energieeinsparmaßnahmen erstellen?",
+        "truth_answer": "Nein, ein Umsetzungsplan ist nicht erforderlich, da der jährliche Energieverbrauch unter der Schwelle von 2,5 GWh gemäß § 9 EnEfG liegt.",
+        "meta_data": {
+            "source_id": "14659",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen mit einem jährlichen Energieverbrauch von 3 GWh möchte wissen, ob es von der Pflicht zur Abwärmenutzung betroffen ist?",
+        "truth_answer": "Ja, ein Unternehmen mit einem jährlichen durchschnittlichen Gesamtendenergieverbrauch von mehr als 2,5 GWh unterliegt gemäß § 16 Absatz 2 EnEfG den Pflichten zur Abwärmenutzung, sofern die Maßnahmen technisch und wirtschaftlich zumutbar sind.",
+        "meta_data": {
+            "source_id": "14669",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen betreibt ein Rechenzentrum mit einer nicht redundanten Nennanschlussleistung von 1,2 MW. Ist es verpflichtet, ein Energie- oder Umweltmanagementsystem zu validieren oder zertifizieren?",
+        "truth_answer": "Ja, Rechenzentren mit einer nicht redundanten Nennanschlussleistung ab 1 MW sind gemäß § 12 Absatz 3 EnEfG ab dem 1. Januar 2026 zur Validierung oder Zertifizierung eines Energie- oder Umweltmanagementsystems verpflichtet.",
+        "meta_data": {
+            "source_id": "14665",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Wohnungsunternehmen hat einen jährlichen Energieverbrauch von 1,2 GWh. Unterliegt es der Pflicht zur jährlichen Endenergieeinsparung?",
+        "truth_answer": "Nein, Wohnungsunternehmen, die öffentliche Stellen sind, sind gemäß § 6 Absatz 6 EnEfG von den Pflichten zur jährlichen Endenergieeinsparung ausgenommen.",
+        "meta_data": {
+            "source_id": "14654",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein öffentliches Unternehmen weist innerhalb der letzten drei Jahre einen jährlichen Gesamtendenergieverbrauch von 0,8 GWh auf. Ist es verpflichtet, jährliche Einsparungen von 2 % umzusetzen?",
+        "truth_answer": "Nein, nur öffentliche Stellen mit einem jährlichen Gesamtendenergieverbrauch von 1 GWh oder mehr unterliegen gemäß § 6 Absatz 1 EnEfG der Verpflichtung zu jährlichen Einsparungen von 2 %.",
+        "meta_data": {
+            "source_id": "14650",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen, dessen Rechenzentrum vor dem 1. Juli 2027 außer Betrieb genommen wird, betreibt Informationstechnik. Muss es ein Energie- oder Umweltmanagementsystem einrichten?",
+        "truth_answer": "Nein, gemäß § 12 Absatz 6 EnEfG sind Rechenzentren oder Informationstechnik, die vor dem 1. Juli 2027 außer Betrieb gehen, von der Pflicht zur Einrichtung eines Energie- oder Umweltmanagementsystems ausgenommen.",
+        "meta_data": {
+            "source_id": "14666",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein klimaneutrales Unternehmen möchte Informationen zur Befreiung von Pflichten gemäß §§ 11 bis 17 EnEfG. Gilt für sie eine Ausnahmeregelung?",
+        "truth_answer": "Ja, gemäß § 18 EnEfG kann die Bundesregierung durch Rechtsverordnung Ausnahmen und Befreiungen für klimaneutrale Unternehmen von den Pflichten nach den §§ 11 bis 17 EnEfG vorsehen.",
+        "meta_data": {
+            "source_id": "14674",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen ist Betreiber eines Rechenzentrums mit einer Nennanschlussleistung unter 1 MW. Muss es bis 2026 ein Energie- oder Umweltmanagementsystem einrichten?",
+        "truth_answer": "Ja, unbeschadet von § 8 EnEfG sind Betreiber von Rechenzentren, unabhängig von der Nennanschlussleistung, gemäß § 12 Absatz 1 EnEfG verpflichtet, bis zum 1. Juli 2025 ein Energie- oder Umweltmanagementsystem einzurichten.",
+        "meta_data": {
+            "source_id": "14664",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    },
+    {
+        "question": "Ein Unternehmen nutzt die Abwärme in seinem Betrieb und liefert 60 % davon über ein Wärmenetz weiter. Muss es ein Energie- oder Umweltmanagementsystem einführen?",
+        "truth_answer": "Nein, gemäß § 12 Absatz 4 EnEfG sind Rechenzentren, deren wiederverwendete Energie zu mindestens 50 % über ein Wärmenetz weitergegeben wird, unter bestimmten Voraussetzungen von der Pflicht zur Einrichtung eines Energie- oder Umweltmanagementsystems befreit.",
+        "meta_data": {
+            "source_id": "14665",
+            "source": "https://www.gesetze-im-internet.de/enefg/BJNR1350B0023.html"
+        }
+    }
+]
