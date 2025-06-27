@@ -43,7 +43,7 @@ embedding_models:
 
 # ========== Large Language Models ==========
 language_models:
-  active_model: "GPT" # [GPT | llama3-german]
+  active_model: "llama3-german" # [GPT | llama3-german]
 
   models:
     GPT:
@@ -58,6 +58,7 @@ language_models:
     llama3-german:
       provider: "DiscoResearch"
       model_name: "DiscoResearch/Llama3-DiscoLeo-Instruct-8B-v0.1"
+      api_key: ""
       temperature: 0.7
       max_tokens: 4096
       top_p: 0.9
@@ -73,8 +74,8 @@ language_models:
     4. If the user asks about funding programs, tax incentives, compliance requirements, legal questions, or requests a tailored roadmap for the company, make sure to ask: energy consumption, sectors, taken steps,  Are you considered a SME?
     5. Respond in the same language as the user's query. If the query is in German, reply in German. If the query is in English, reply in English.
     6. If the answer is oneliner avoid explanationsa and just write to the point answer.
-    7. Try to write an answer in paragraphs, avoid multiple points. 
-    7. If you are not sure about answer indicate that you cannot provide a specific answer.
+    7. Try to write an answer in paragraphs, avoid multiple points and \n or \n\n. 
+    8. If you are not sure about answer indicate that you cannot provide a specific answer.
 
     Now, proceed with the user's query and the retrieved context (if any).
 
