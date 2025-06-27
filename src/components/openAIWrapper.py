@@ -15,7 +15,7 @@ class OpenAIWrapper:
         self,
         embedding_model_name=config_loader.embedding_model,
         llm_model_name=config_loader.llm_model_name,
-        temperature=0.7,
+        temperature=0.5,
         return_torch=True,
     ):
         """
@@ -108,7 +108,7 @@ class OpenAIWrapper:
 
         return sum(token_counts)
 
-    def text_generator(self, prompt, max_tokens=100):
+    def rag_text_generator(self, prompt, max_tokens=100):
         """
         Generate text based on a prompt using OpenAI's language model.
 
@@ -126,13 +126,14 @@ class OpenAIWrapper:
                     },
                 ],
                 model=self.llm_model_name,
+                temperature=self.temperature,
             )
             return chat_completion.choices[0].message.content
         except Exception as e:
             logger.error(f"Error generating text: {e}")
             return None
 
-    def dataset_question_gen(self, prompt, max_tokens=100):
+    def raw_text_generator(self, prompt, max_tokens=100):
         """
         Generate text based on a prompt using OpenAI's language model.
 
@@ -149,6 +150,7 @@ class OpenAIWrapper:
                     },
                 ],
                 model=self.llm_model_name,
+                temperature=self.temperature,
             )
             return chat_completion.choices[0].message.content
         except Exception as e:
@@ -175,5 +177,5 @@ if __name__ == "__main__":
     # )
 
     prompt = "Explain the role of OeMAG in promoting renewable energy in Austria."
-    generated_text = openai_embedder.text_generator(prompt)
+    generated_text = openai_embedder.rag_text_generator(prompt)
     print("Generated Text:", generated_text)

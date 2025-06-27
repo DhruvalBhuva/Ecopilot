@@ -2,10 +2,14 @@ import torch
 from src.load_config import LoadConfig
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
+config_loader = LoadConfig()
+
 
 class Llama3GermanWrapper:
     def __init__(
-        self, model_name="DiscoResearch/Llama3-DiscoLeo-Instruct-8B-v0.1", device="cuda"
+        self,
+        model_name=config_loader.llm_model_name,
+        device=config_loader.device,
     ):
         """
         Initialize the Llama3-DiscoLeo model and tokenizer.
@@ -22,23 +26,17 @@ class Llama3GermanWrapper:
         )
         self.tokenizer = AutoTokenizer.from_pretrained(self.model_name)
 
-    def text_generator(
+    def rag_text_generator(
         self,
         prompt,
-        system_message="Du bist ein hilfreicher Assistent.",
         max_new_tokens=512,
     ):
         """
         Generate a response from the model based on the given prompt.
-
-        :param prompt: The input text to generate a response for.
-        :param system_message: The system message to set the context for the assistant.
-        :param max_new_tokens: The maximum number of tokens to generate.
-        :return: The generated response as a string.
         """
         # Prepare the messages in chat format
         messages = [
-            {"role": "system", "content": system_message},
+            {"role": "system", "content": config_loader.llm_system_role},
             {"role": "user", "content": prompt},
         ]
 
@@ -49,6 +47,31 @@ class Llama3GermanWrapper:
 
         # Tokenize the input and move to the appropriate device
         model_inputs = self.tokenizer([text], return_tensors="pt").to(self.device)
+
+        # Generate the response
+        generated_ids = self.model.generate(
+            model_inputs.input_ids, max_new_tokens=max_new_tokens
+        )
+
+        # Decode the generated tokens to a string
+        response = self.tokenizer.batch_decode(generated_ids, skip_special_tokens=True)[
+            0
+        ]
+
+        return response
+
+    def raw_text_generator(
+        self,
+        prompt,
+        max_new_tokens=512,
+    ):
+        """
+        Generate a response from the model based on the given prompt.
+        """
+        # Tokenize the input and move to the appropriate device
+        model_inputs = self.tokenizer(
+            prompt, return_tensors="pt", truncation=True, max_length=2048
+        ).to(self.device)
 
         # Generate the response
         generated_ids = self.model.generate(
@@ -76,7 +99,7 @@ if __name__ == "__main__":
     prompt = "Schreibe ein Essay über die Bedeutung der Energiewende für Deutschlands Wirtschaft"
 
     # Generate a response
-    response = llama3_german.text_generator(prompt)
+    response = llama3_german.rag_text_generator(prompt)
 
     # Print the response
     print("Generated Response:", response)

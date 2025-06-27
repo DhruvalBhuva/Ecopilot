@@ -67,7 +67,7 @@ if __name__ == "__main__":
         # print(final_prompt)
 
         oprnai_wrapper = OpenAIWrapper()
-        questions = oprnai_wrapper.text_generator(final_prompt)
+        questions = oprnai_wrapperrag_text_generator(final_prompt)
         print("\n--- Generated Questions ---")
         print(questions)
 

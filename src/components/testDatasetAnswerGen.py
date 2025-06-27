@@ -1,10 +1,11 @@
 import json
 from typing import List, Dict
 from src.load_config import LoadConfig
+from src.pipeline.RAGPipeline import RAGPipeline
 from src.components.openAIWrapper import OpenAIWrapper
+from src.components.llama3GermanWrapper import Llama3GermanWrapper
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 from src.components.postgreSQLRetriever import HybridRetriever
-from src.pipeline.RAGPipeline import RAGPipeline
 
 
 class TestDatasetAnswerGenerator:
@@ -14,6 +15,7 @@ class TestDatasetAnswerGenerator:
         self.device = config_loader.device
 
         self.openai_wrapper = OpenAIWrapper()
+        self.llama3_german_wrapper = Llama3GermanWrapper()
 
         self.postgres_wrapper = PostgreSQLWrapper()
 
@@ -36,14 +38,32 @@ class TestDatasetAnswerGenerator:
             print(f"Error retrieving documents for question '{question}': {e}")
             return []
 
-    def generate_answers(self, question: str) -> Dict:
+    def generate_raw_answers(self, question: str) -> Dict:
+        """
+        Generate raw answers for the given question.
+        """
+        try:
+            # raw_gpt_answers = self.openai_wrapper.raw_text_generator(question)
+            raw_llama_answers = self.llama3_german_wrapper.chat_llama3(question)
+            return {
+                # "raw_gpt_answers": raw_gpt_answers,
+                "raw_llama_answers": raw_llama_answers,
+            }
+        except Exception as e:
+            print(f"Error generating raw answers for question '{question}': {e}")
+            return {
+                "raw_gpt_answers": "",
+                "raw_llama_answers": "",
+            }
+
+    def generate_rag_answers(self, question: str) -> Dict:
         """
         Generate answers and retrieve documents for the given question.
         """
         try:
             # Retrieve reranked documents and answers
-            gpt_result = self.rag_pipeline.response(query=question, model="GPT")
-            # llama_result = self.rag_pipeline.response(query=question, model="Llama3")
+            # gpt_result = self.rag_pipeline.response(query=question, model="GPT")
+            llama_result = self.rag_pipeline.response(query=question, model="Llama3")
 
             # retrieved_docs = [
             #     {"id": doc["id"], "text": doc["text"]}
@@ -53,16 +73,16 @@ class TestDatasetAnswerGenerator:
 
             return {
                 # "retrieved_documents": retrieved_docs,
-                "gpt_generated_answer": gpt_result.get("answer", ""),
-                # "llama_generated_answer": llama_result.get("answer", ""),
+                # "rag_gpt_answers": gpt_result.get("answer", ""),
+                "rag_llama_answers": llama_result.get("answer", ""),
             }
 
         except Exception as e:
             print(f"Error generating data for question '{question}': {e}")
             return {
                 "retrieved_documents": [],
-                "gpt_generated_answer": "",
-                "llama_generated_answer": "",
+                "rag_gpt_answers": "",
+                "rag_llama_answers": "",
             }
 
     def process_test_data(self, input_file: str, output_file: str):
@@ -78,6 +98,8 @@ class TestDatasetAnswerGenerator:
                 question = entry.get("question", "")
                 truth_answer = entry.get("truth_answer", "")
                 truth_answer_ids = entry.get("truth_answer_ids", [])
+                rag_gpt_answers = entry.get("rag_gpt_answers", "")
+                raw_gpt_answers = entry.get("raw_gpt_answers", "")
                 retrieved_documents = entry.get("retrieved_documents", [])
                 meta_data = entry.get("meta_data", {})
 
@@ -85,15 +107,18 @@ class TestDatasetAnswerGenerator:
                     print("Warning: Empty question found, skipping entry.")
                     continue
 
-                generated_data = self.generate_answers(question)
+                rag_generated_data = self.generate_rag_answers(question)
+                raw_answers = self.generate_raw_answers(question)
 
                 updated_entry = {
                     "question": question,
                     "truth_answer": truth_answer,
                     "truth_answer_ids": truth_answer_ids,
                     "retrieved_documents": retrieved_documents,
-                    "gpt_generated_answer": generated_data["gpt_generated_answer"],
-                    # "llama_generated_answer": generated_data["llama_generated_answer"],
+                    "rag_gpt_answers": rag_gpt_answers,
+                    "raw_gpt_answers": raw_gpt_answers,
+                    "rag_llama_answers": rag_generated_data["rag_llama_answers"],
+                    "raw_llama_answers": raw_answers["raw_llama_answers"],
                     "meta_data": meta_data,
                 }
 
@@ -111,6 +136,6 @@ class TestDatasetAnswerGenerator:
 # Example usage
 if __name__ == "__main__":
     test_data_generator = TestDatasetAnswerGenerator()
-    input_file_path = "dataset/test/retriver/generated_answer_overall.json"
-    output_file_path = "dataset/test/generated_gpt_answers.json"
+    input_file_path = "dataset/test/generator/generated_gpt_answers_1.json"
+    output_file_path = "dataset/test/generator/generated_gpt_answers_0-5.json"
     test_data_generator.process_test_data(input_file_path, output_file_path)

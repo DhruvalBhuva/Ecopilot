@@ -25,16 +25,36 @@ class RAGASEvaluator:
         self.batch_size = batch_size
         self.timeout = timeout
 
-    def _format_to_ragas_dataset(self, test_data: List[Dict]) -> List[Dict]:
+    def _format_to_ragas_dataset(
+        self, test_data: List[Dict], answer_key: str
+    ) -> List[Dict]:
         formatted = []
         for item in test_data:
+            question = item.get("question", "[NO QUESTION]")
+            response = item.get(answer_key)
+            reference = item.get("truth_answer")
+            contexts = item.get("retrieved_documents", [])
+
+            # Validate fields
+            if not response:
+                print(f"⚠️ Skipping due to missing response for question: {question}")
+                continue
+            if not reference:
+                print(f"⚠️ Skipping due to missing reference for question: {question}")
+                continue
+            if not contexts or not all(doc.get("text") for doc in contexts):
+                print(
+                    f"⚠️ Skipping due to missing/invalid retrieved contexts for question: {question}"
+                )
+                continue
+
             formatted.append(
                 {
-                    "user_input": item["question"],
-                    "response": item["gpt_generated_answer"],
-                    "reference": item["truth_answer"],
+                    "user_input": question,
+                    "response": response,
+                    "reference": reference,
                     "retrieved_contexts": [
-                        doc["text"] for doc in item["retrieved_documents"][:5]
+                        doc["text"] for doc in contexts if doc.get("text")
                     ],
                 }
             )
@@ -50,15 +70,9 @@ class RAGASEvaluator:
     def _evaluate_with_retry(
         self, evaluation_dataset: EvaluationDataset
     ) -> EvaluationResult:
-        try:
-            return evaluate(
-                dataset=evaluation_dataset, metrics=self.metrics, llm=self.llm
-            )
-        except TimeoutError:
-            print("⚠️ TimeoutError during evaluation.")
-            raise
+        return evaluate(dataset=evaluation_dataset, metrics=self.metrics, llm=self.llm)
 
-    def evaluate(self, test_data: List[Dict]) -> Dict[str, float]:
+    def evaluate(self, test_data: List[Dict], answer_key: str) -> Dict[str, float]:
         all_results: List[EvaluationResult] = []
         total_batches = (len(test_data) + self.batch_size - 1) // self.batch_size
 
@@ -66,13 +80,18 @@ class RAGASEvaluator:
             batch = test_data[i : i + self.batch_size]
             batch_num = (i // self.batch_size) + 1
 
-            print(f"🔄 Starting batch {batch_num}/{total_batches}...")
+            print(
+                f"\n🔄 Starting batch {batch_num}/{total_batches} for {answer_key}..."
+            )
 
             try:
                 start_time = time.time()
-                formatted_batch = self._format_to_ragas_dataset(batch)
+                formatted_batch = self._format_to_ragas_dataset(batch, answer_key)
+                if not formatted_batch:
+                    print("⚠️ Skipping empty batch.")
+                    continue
+
                 evaluation_dataset = EvaluationDataset.from_list(formatted_batch)
-                print("DEBUG: Evaluation dataset created")
 
                 result = self._evaluate_with_retry(evaluation_dataset)
 
@@ -88,7 +107,7 @@ class RAGASEvaluator:
         # Aggregate results
         final_scores = {}
         try:
-            print("\nDEBUG: Aggregating metrics from results...")
+            print("\n📊 Aggregating metrics...")
 
             all_score_dicts = []
             for res in all_results:
@@ -105,8 +124,6 @@ class RAGASEvaluator:
                 values = [score[metric] for score in all_score_dicts if metric in score]
                 final_scores[metric] = sum(values) / len(values)
 
-            print("\n🎉 Evaluation Complete")
-
         except Exception as e:
             print(f"💥 Failed to aggregate results: {e}")
             raise
@@ -121,7 +138,7 @@ class RAGASEvaluator:
 if __name__ == "__main__":
     try:
         with open(
-            "dataset/test/generator/generated_gpt_answers_2.json", encoding="utf-8"
+            "dataset/test/generator/generated_gpt_answers_0-5.json", encoding="utf-8"
         ) as f:
             test_data = json.load(f)
 
@@ -131,15 +148,25 @@ if __name__ == "__main__":
             request_timeout=60,
         )
 
-        evaluator = RAGASEvaluator(llm=llm, batch_size=5)
+        evaluator = RAGASEvaluator(llm=llm, batch_size=3)
 
-        scores = evaluator.evaluate(test_data)
-
-        print("\n📊 Final RAGAS Evaluation Scores:")
-        for metric, value in scores.items():
+        # Evaluate rag_gpt_answers
+        rag_scores = evaluator.evaluate(test_data, answer_key="rag_gpt_answers")
+        print("\n📊 Final Scores for RAG GPT Answers:")
+        for metric, value in rag_scores.items():
             print(f"{metric}: {value:.4f}")
+        evaluator.save_results(
+            rag_scores, "dataset/test/generator/ragas_metrics_rag_0-5.json"
+        )
 
-        evaluator.save_results(scores, "dataset/test/generator/ragas_metrics.json")
+        # Evaluate raw_gpt_answers
+        raw_scores = evaluator.evaluate(test_data, answer_key="raw_gpt_answers")
+        print("\n📊 Final Scores for Raw GPT Answers:")
+        for metric, value in raw_scores.items():
+            print(f"{metric}: {value:.4f}")
+        evaluator.save_results(
+            raw_scores, "dataset/test/generator/ragas_metrics_raw_0-5.json"
+        )
 
     except Exception as e:
         print(f"💥 Evaluation failed completely: {e}")

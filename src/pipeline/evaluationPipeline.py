@@ -103,10 +103,10 @@ class RAGEvaluator:
         predictions = []
 
         for item in test_data:
-            if "truth_answer" not in item or "gpt_generated_answer" not in item:
+            if "truth_answer" not in item or "rag_gpt_answers" not in item:
                 continue
             references.append(item["truth_answer"])
-            predictions.append(item["gpt_generated_answer"])
+            predictions.append(item["rag_gpt_answers"])
 
         if not references or not predictions:
             return {"BLEU": 0.0, "ROUGE-L": 0.0, "METEOR": 0.0, "BERTScore": 0.0}
@@ -160,11 +160,11 @@ class RAGEvaluator:
 
     def print_metrics(self, metrics: Dict[str, Dict[str, float]]):
         """Pretty print evaluation metrics"""
-        print("=== Retrieval Metrics ===")
+        # print("=== Retrieval Metrics ===")
         # for metric, value in metrics["retrieval_metrics"].items():
         #     print(f"{metric:15}: {value:.4f}")
 
-        # print("\n=== Generation Metrics ===")
+        print("\n=== Generation Metrics ===")
         for metric, value in metrics["generation_metrics"].items():
             print(f"{metric:20}: {value:.4f}")
 
@@ -181,7 +181,7 @@ class RAGEvaluator:
 
 
 if __name__ == "__main__":
-    evaluation_data_file_path = "dataset/test/generator/generated_gpt_answers_2.json"
+    evaluation_data_file_path = "dataset/test/generator/generated_gpt_answers.json"
 
     try:
         with open(evaluation_data_file_path, "r", encoding="utf-8") as f:
@@ -199,5 +199,5 @@ if __name__ == "__main__":
     metrics = evaluator.evaluate_rag(test_data)
     evaluator.print_metrics(metrics)
     evaluator.save_metrics_to_file(
-        metrics, "dataset/test/generator/evaluation_metrics.json"
+        metrics, "dataset/test/generator/evaluation_gpt_metrics.json"
     )

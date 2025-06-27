@@ -1,3 +1,4 @@
+import torch
 from typing import List, Dict
 from src.logger import logger
 from src.load_config import LoadConfig
@@ -5,8 +6,6 @@ from src.components.openAIWrapper import OpenAIWrapper
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 from src.components.postgreSQLRetriever import HybridRetriever
 from src.components.llama3GermanWrapper import Llama3GermanWrapper
-
-import torch
 
 
 class RAGPipeline:
@@ -42,15 +41,10 @@ class RAGPipeline:
         )
 
         # Initialize OpenAIWrapper for answer generation
-        self.openai_wrapper = OpenAIWrapper(
-            llm_model_name=config_loader.get_llm_model_config("GPT")["model_name"],
-        )
+        self.openai_wrapper = OpenAIWrapper()
 
         # Initialize Llama3GermanWrapper for answer generation (optional)
-        # self.llama3_german_wrapper = Llama3GermanWrapper(
-        #     model_name=config_loader.get_llm_model_config("llama3-german")["model_name"],
-        #     device=self.device,
-        # )
+        self.llama3_german_wrapper = Llama3GermanWrapper()
 
     def response(self, query: str, model="GPT") -> Dict:
         """
@@ -83,9 +77,9 @@ class RAGPipeline:
 
             # Generate the answer using the specified model
             if model == "Llama3":
-                answer = self.llama3_german_wrapper.text_generator(prompt)
+                answer = self.llama3_german_wrapper.rag_text_generator(prompt)
             else:
-                answer = self.openai_wrapper.text_generator(prompt)
+                answer = self.openai_wrapperrag_text_generator(prompt)
 
             return {
                 "answer": answer,
