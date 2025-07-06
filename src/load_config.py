@@ -23,7 +23,8 @@ class LoadConfig:
         with open(config_path) as cfg:
             self.app_config = yaml.safe_load(cfg)
 
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        # self.device = "cuda" if torch.cuda.is_available() else "cpu"
+        self.device = "cpu"  # Force CPU for compatibility
         self._init_env_vars()
         self._init_data_sources()
         self._init_directories_vars()
@@ -133,4 +134,4 @@ class LoadConfig:
 if __name__ == "__main__":
     config_loader = LoadConfig()
 
-    print(config_loader.dataset_gen_prompt_2)
+    print(config_loader.azure_openai_api_key)

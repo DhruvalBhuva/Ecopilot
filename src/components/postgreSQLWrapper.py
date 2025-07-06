@@ -11,13 +11,21 @@ class PostgreSQLWrapper:
     def __init__(self, pg_table: str = None):
         config_loader = LoadConfig()
 
-        self.host = config_loader.pg_host
-        self.port = config_loader.pg_port
-        self.database = config_loader.pg_database
-        self.table = pg_table or config_loader.pg_table
-        self.user = config_loader.pg_user
-        self.password = config_loader.pg_password
+        # self.host = config_loader.pg_host
+        # self.port = config_loader.pg_port
+        # self.database = config_loader.pg_database
+        # self.table = pg_table or config_loader.pg_table
+        # self.user = config_loader.pg_user
+        # self.password = config_loader.pg_password
+
+        self.host = "localhost"
+        self.port = "5432"
+        self.database = "ecopilot"
+        self.user = "postgres"
+        self.password = "postgres"
+        self.table = "corpus"
         self.connection = self._connect_to_postgres()
+
         # self._create_table_if_not_exists()
 
     def _connect_to_postgres(self):
@@ -29,9 +37,8 @@ class PostgreSQLWrapper:
                 database=self.database,
                 user=self.user,
                 password=self.password,
-                sslmode="require",  # Supabase requires SSL
             )
-            register_vector(conn)  # Register pgvector extension
+            # register_vector(conn)  # Register pgvector extension
             return conn
         except Exception as e:
             logger.error0(f"Error connecting to PostgreSQL: {e}")
@@ -102,7 +109,7 @@ class PostgreSQLWrapper:
             logger.error(f"Error executing query: {e}")
             raise
 
-    def insert_embeddings(self, documents, table="ecopilot-corpus"):
+    def insert_embeddings(self, documents, table="corpus"):
         """Insert documents and their embeddings into PostgreSQL."""
         try:
             with self.connection.cursor() as cursor:
@@ -132,7 +139,7 @@ class PostgreSQLWrapper:
             logger.error(f"Error inserting embeddings: {e}")
             raise
 
-    def get_record_count(self, table="ecopilot-corpus"):
+    def get_record_count(self, table="corpus"):
         """
         Retrieve the total number of records (rows) in the table.
         """
@@ -145,7 +152,7 @@ class PostgreSQLWrapper:
             logger.error(f"Error retrieving record count: {e}")
             raise
 
-    def delete_records(self, record_ids=None, table="ecopilot-corpus"):
+    def delete_records(self, record_ids=None, table="corpus"):
         """
         Delete records from the table.
         If `record_ids` is provided, delete only those records.

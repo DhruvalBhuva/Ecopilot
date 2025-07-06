@@ -45,11 +45,13 @@ def load_documents(sources):
                     for filename in os.listdir(source_path):
                         if filename.lower().endswith(".pdf"):
                             filepath = os.path.join(source_path, filename)
+                            logger.info(f"Processing PDF in directory: {filepath}")
                             docs = load_pdf_with_langchain(filepath)
-                            chunked_docs = chunk_documents(docs)  # Chunking PDFs
+                            chunked_docs = chunk_documents(docs)
                             documents.extend(chunked_docs)
 
                 elif source_path.lower().endswith(".pdf"):  # Handle single PDF files
+                    logger.info(f"Processing single PDF file: {source_path}")
                     docs = load_pdf_with_langchain(source_path)
                     chunked_docs = chunk_documents(docs)
                     documents.extend(chunked_docs)
@@ -86,7 +88,6 @@ def load_pdf_with_langchain(pdf_path):
         return []
 
 
-
 def extract_keywords_tfidf(text, num_keywords=15):
     """
     Extracts top `num_keywords` based on TF-IDF scores for mixed English and German text.
@@ -94,7 +95,9 @@ def extract_keywords_tfidf(text, num_keywords=15):
     try:
         # Combine English and German stopwords
         en_stopwords = set(stopwords.words("english")).union(["https"])
-        de_stopwords = set(stopwords.words("german")).union(["speaker2", "speaker1", "ähm", "äh", "ja", "nein", "okay"])
+        de_stopwords = set(stopwords.words("german")).union(
+            ["speaker2", "speaker1", "ähm", "äh", "ja", "nein", "okay"]
+        )
         stop_words = en_stopwords.union(de_stopwords)
 
         # Initialize TF-IDF Vectorizer with combined stopwords
@@ -117,10 +120,14 @@ def extract_keywords_tfidf(text, num_keywords=15):
         logger.error(f"Error extracting keywords: {e}")
         return []
 
+
 # Use OpenAI's tokenizer (same for text-embedding-3-small)
 encoding = tiktoken.get_encoding("cl100k_base")
+
+
 def token_len(text):
     return len(encoding.encode(text))
+
 
 def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
     """Chunks documents into smaller sections and adds chunk number to metadata."""
@@ -140,6 +147,7 @@ def chunk_documents(documents, chunk_size=1000, chunk_overlap=200):
         all_chunks.extend(chunks)
     return all_chunks
 
+
 def clean_text(text, words_to_remove=None):
     """
     Cleans and normalizes text by fixing Unicode issues, removing unwanted patterns,
@@ -155,16 +163,16 @@ def clean_text(text, words_to_remove=None):
         text = html.unescape(text)
 
         # 3. Re-decode misencoded Unicode characters (e.g., "Ã¼" → "ü")
-        text = text.encode('latin1').decode('utf-8', "ignore")
+        text = text.encode("latin1").decode("utf-8", "ignore")
 
         # 4. Normalize characters (e.g., full-width → ASCII, ligatures)
         text = unicodedata.normalize("NFKC", text)
 
         # 5. Fix hyphenated line-breaks: "influ-\nenced" → "influenced"
-        text = re.sub(r'(\w+)-\s*\n?\s*(\w+)', r'\1\2', text)
+        text = re.sub(r"(\w+)-\s*\n?\s*(\w+)", r"\1\2", text)
 
         # 6. Replace escaped newlines: "\\n" → actual newline
-        text = re.sub(r'\\n', '\n', text)
+        text = re.sub(r"\\n", "\n", text)
 
         # 7. Remove long dotted sequences: ". . . . ." → " "
         text = re.sub(r"\s*\.\s*(?:\.\s*)+", " ", text)
@@ -173,7 +181,7 @@ def clean_text(text, words_to_remove=None):
         text = re.sub(r"\[\s*\d+(?:[,-]\d+)*\s*\]|\[\s*\]", "", text)
 
         # 9. Remove unnecessary placeholders like "<EOS> <pad>"
-        text = re.sub(r'\s*<EOS>\s*<pad>\s*', ' ', text)
+        text = re.sub(r"\s*<EOS>\s*<pad>\s*", " ", text)
 
         # 10. Fix split letters (common in OCR): "E n e r g y" → "Energy"
         text = re.sub(
@@ -197,9 +205,7 @@ def clean_text(text, words_to_remove=None):
         return text
 
 
-def save_all_chunks_to_json(
-    documents, directory, max_chunks_per_file=500
-):
+def save_all_chunks_to_json(documents, directory, max_chunks_per_file=500):
     """Save all document chunks to JSON files, ensuring the target directory exists."""
     if not documents:
         print("No documents available to save.")

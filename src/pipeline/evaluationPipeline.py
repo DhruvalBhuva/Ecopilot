@@ -98,57 +98,75 @@ class RAGEvaluator:
 
         return dict(results)
 
-    def evaluate_generation(self, test_data: List[Dict]) -> Dict[str, float]:
-        references = []
-        predictions = []
+    def evaluate_generation(self, test_data: List[Dict]) -> Dict[str, Dict[str, float]]:
+        # Store all generations and results by answer type
+        answer_types = [
+            "rag_llama_answers",
+            "raw_llama_answers",
+            "rag_gpt_answers",
+            "raw_gpt_answers",
+        ]
 
-        for item in test_data:
-            if "truth_answer" not in item or "rag_gpt_answers" not in item:
+        # Prepare results dict
+        results = {}
+
+        for answer_type in answer_types:
+            references = []
+            predictions = []
+
+            for item in test_data:
+                if "truth_answer" not in item or answer_type not in item:
+                    continue
+                references.append(item["truth_answer"])
+                predictions.append(item[answer_type])
+
+            if not references or not predictions:
+                results[answer_type] = {
+                    "BLEU": 0.0,
+                    "ROUGE-L": 0.0,
+                    "METEOR": 0.0,
+                    "BERTScore": 0.0,
+                }
                 continue
-            references.append(item["truth_answer"])
-            predictions.append(item["rag_gpt_answers"])
 
-        if not references or not predictions:
-            return {"BLEU": 0.0, "ROUGE-L": 0.0, "METEOR": 0.0, "BERTScore": 0.0}
+            # Tokenize for BLEU
+            refs_tokenized = [[word_tokenize(ref)] for ref in references]
+            preds_tokenized = [word_tokenize(pred) for pred in predictions]
 
-        # Tokenize for BLEU
-        refs_tokenized = [[word_tokenize(ref)] for ref in references]
-        preds_tokenized = [word_tokenize(pred) for pred in predictions]
-
-        # Compute Metrics
-        try:
-            bleu = corpus_bleu(
-                refs_tokenized, preds_tokenized, smoothing_function=self.smoothie
-            )
-        except:
-            bleu = 0.0
-
-        rouge_l_scores = []
-        meteor_scores = []
-        for ref, pred in zip(references, predictions):
             try:
-                rouge_l_scores.append(self.rouge.score(ref, pred)["rougeL"].fmeasure)
-                meteor_scores.append(
-                    meteor_score([ref], pred, language="de")
-                )  # Use "en" for English
-            except Exception as e:
-                print(f"Error calculating ROUGE/METEOR: {e}")
-                continue
+                bleu = corpus_bleu(
+                    refs_tokenized, preds_tokenized, smoothing_function=self.smoothie
+                )
+            except:
+                bleu = 0.0
 
-        # BERTScore (multilingual)
-        bert = self.bert_score.compute(
-            predictions=predictions,
-            references=references,
-            lang="de",  # or "en"
-            model_type="bert-base-multilingual-cased",
-        )
+            rouge_l_scores = []
+            meteor_scores = []
+            for ref, pred in zip(references, predictions):
+                try:
+                    rouge_l_scores.append(
+                        self.rouge.score(ref, pred)["rougeL"].fmeasure
+                    )
+                    meteor_scores.append(meteor_score([ref], pred, language="de"))
+                except Exception as e:
+                    print(f"Error calculating ROUGE/METEOR: {e}")
+                    continue
 
-        return {
-            "BLEU": round(bleu, 4),
-            "ROUGE-L": round(np.mean(rouge_l_scores), 4) if rouge_l_scores else 0.0,
-            "METEOR": round(np.mean(meteor_scores), 4) if meteor_scores else 0.0,
-            "BERTScore": round(np.mean(bert["f1"]), 4) if bert["f1"] else 0.0,
-        }
+            bert = self.bert_score.compute(
+                predictions=predictions,
+                references=references,
+                lang="de",
+                model_type="bert-base-multilingual-cased",
+            )
+
+            results[answer_type] = {
+                "BLEU": round(bleu, 4),
+                "ROUGE-L": round(np.mean(rouge_l_scores), 4) if rouge_l_scores else 0.0,
+                "METEOR": round(np.mean(meteor_scores), 4) if meteor_scores else 0.0,
+                "BERTScore": round(np.mean(bert["f1"]), 4) if bert["f1"] else 0.0,
+            }
+
+        return results
 
     def evaluate_rag(
         self, test_data: List[Dict], k_values: List[int] = [1, 2, 3, 5, 10]
@@ -158,15 +176,20 @@ class RAGEvaluator:
             "generation_metrics": self.evaluate_generation(test_data),
         }
 
-    def print_metrics(self, metrics: Dict[str, Dict[str, float]]):
+    def print_metrics(self, metrics):
         """Pretty print evaluation metrics"""
-        # print("=== Retrieval Metrics ===")
-        # for metric, value in metrics["retrieval_metrics"].items():
-        #     print(f"{metric:15}: {value:.4f}")
 
-        print("\n=== Generation Metrics ===")
-        for metric, value in metrics["generation_metrics"].items():
-            print(f"{metric:20}: {value:.4f}")
+        # if "retrieval_metrics" in metrics:
+        #     print("=== Retrieval Metrics ===")
+        #     for metric, value in metrics["retrieval_metrics"].items():
+        #         print(f"{metric:15}: {value:.4f}")
+
+        if "generation_metrics" in metrics:
+            print("\n=== Generation Metrics ===")
+            for answer_type, metric_dict in metrics["generation_metrics"].items():
+                print(f"\n-- {answer_type} --")
+                for metric, value in metric_dict.items():
+                    print(f"{metric:15}: {value:.4f}")
 
     def save_metrics_to_file(
         self, metrics: Dict[str, Dict[str, float]], file_path: str
@@ -181,7 +204,7 @@ class RAGEvaluator:
 
 
 if __name__ == "__main__":
-    evaluation_data_file_path = "dataset/test/generator/generated_gpt_answers.json"
+    evaluation_data_file_path = "dataset/test/generator/rag_answers.json"
 
     try:
         with open(evaluation_data_file_path, "r", encoding="utf-8") as f:
@@ -199,5 +222,5 @@ if __name__ == "__main__":
     metrics = evaluator.evaluate_rag(test_data)
     evaluator.print_metrics(metrics)
     evaluator.save_metrics_to_file(
-        metrics, "dataset/test/generator/evaluation_gpt_metrics.json"
+        metrics, "dataset/test/generator/gen_rag_matrics.json"
     )

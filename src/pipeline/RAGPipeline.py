@@ -11,40 +11,27 @@ from src.components.llama3GermanWrapper import Llama3GermanWrapper
 class RAGPipeline:
     def __init__(
         self,
-        top_k: int = 2,
+        top_k: int = 5,
     ):
         """
         Initialize the RAG pipeline.
-
-        Args:
-            top_k: Number of documents to retrieve per embedder.
         """
         config_loader = LoadConfig()
-
         self.top_k = top_k
+        # self.device = config_loader.device
+        self.device = "cpu"  # Force CPU for compatibility
 
-        # Check for CUDA availability, use CPU if not available
-        self.device = "cuda" if torch.cuda.is_available() else "cpu"
-
-        # Initialize embedders
+        # Initialize components with CPU
         self.openai_embedder = OpenAIWrapper()
-
-        # Initialize PostgreSQLWrapper
         self.postgres_wrapper = PostgreSQLWrapper()
-
-        # Initialize HybridRetriever with correct device
         self.hybrid_retriever = HybridRetriever(
             self.postgres_wrapper,
             self.openai_embedder,
             enable_reranking=True,
             device=self.device,
         )
-
-        # Initialize OpenAIWrapper for answer generation
         self.openai_wrapper = OpenAIWrapper()
-
-        # Initialize Llama3GermanWrapper for answer generation (optional)
-        self.llama3_german_wrapper = Llama3GermanWrapper()
+        self.llama3_german_wrapper = Llama3GermanWrapper(device=self.device)
 
     def response(self, query: str, model="GPT") -> Dict:
         """
@@ -79,7 +66,7 @@ class RAGPipeline:
             if model == "Llama3":
                 answer = self.llama3_german_wrapper.rag_text_generator(prompt)
             else:
-                answer = self.openai_wrapperrag_text_generator(prompt)
+                answer = self.openai_wrapper.rag_text_generator(prompt)
 
             return {
                 "answer": answer,
@@ -98,14 +85,14 @@ if __name__ == "__main__":
 
     # Initialize RAG Pipeline
     rag_pipeline = RAGPipeline(
-        top_k=10,
+        top_k=5,
     )
 
     # Example query
     query = "Welche Rolle spielt die OeMAG in der Förderung erneuerbarer Energien in Österreich?"
 
     # Run the RAG pipeline
-    result = rag_pipeline.response(query, model="GPT")
+    result = rag_pipeline.response(query, model="Llama3")
 
     # Print the results
     print(f"Query: {query}")

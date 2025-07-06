@@ -14,8 +14,10 @@ from ragas import EvaluationDataset
 from ragas.dataset_schema import EvaluationResult
 from ragas.llms import LangchainLLMWrapper
 from ragas.metrics import LLMContextRecall, Faithfulness, FactualCorrectness
+from src.load_config import LoadConfig
 
-from langchain_openai import ChatOpenAI
+# from langchain_openai import ChatOpenAI
+from langchain_openai import AzureChatOpenAI
 
 
 class RAGASEvaluator:
@@ -130,43 +132,61 @@ class RAGASEvaluator:
 
         return final_scores
 
-    def save_results(self, scores: Dict[str, float], file_path: str):
+    def save_results(self, all_scores: Dict[str, Dict[str, float]], file_path: str):
         with open(file_path, "w", encoding="utf-8") as f:
-            json.dump(scores, f, indent=4)
+            json.dump(all_scores, f, indent=4)
 
 
 if __name__ == "__main__":
     try:
-        with open(
-            "dataset/test/generator/generated_gpt_answers_0-5.json", encoding="utf-8"
-        ) as f:
+        with open("dataset/test/generator/rag_answers.json", encoding="utf-8") as f:
             test_data = json.load(f)
 
-        llm = ChatOpenAI(
-            model="gpt-4o",
+        config_loader = LoadConfig()
+
+        llm = AzureChatOpenAI(
+            openai_api_version=config_loader.azure_openai_api_version,
+            azure_deployment=config_loader.llm_model_name,
+            azure_endpoint=config_loader.azure_openai_api_base,
+            api_key=config_loader.azure_openai_api_key,
             temperature=0,
             request_timeout=60,
         )
 
         evaluator = RAGASEvaluator(llm=llm, batch_size=3)
 
-        # Evaluate rag_gpt_answers
-        rag_scores = evaluator.evaluate(test_data, answer_key="rag_gpt_answers")
-        print("\n📊 Final Scores for RAG GPT Answers:")
-        for metric, value in rag_scores.items():
-            print(f"{metric}: {value:.4f}")
-        evaluator.save_results(
-            rag_scores, "dataset/test/generator/ragas_metrics_rag_0-5.json"
-        )
+        all_scores = {}
 
-        # Evaluate raw_gpt_answers
-        raw_scores = evaluator.evaluate(test_data, answer_key="raw_gpt_answers")
-        print("\n📊 Final Scores for Raw GPT Answers:")
-        for metric, value in raw_scores.items():
+        # Evaluate RAG LLaMA answers
+        rag_llama_scores = evaluator.evaluate(test_data, answer_key="rag_llama_answers")
+        print("\n📊 Final Scores for RAG LLaMA Answers:")
+        for metric, value in rag_llama_scores.items():
             print(f"{metric}: {value:.4f}")
-        evaluator.save_results(
-            raw_scores, "dataset/test/generator/ragas_metrics_raw_0-5.json"
-        )
+        all_scores["rag_llama_answers"] = rag_llama_scores
+
+        # Evaluate RAW LLaMA answers
+        raw_llama_scores = evaluator.evaluate(test_data, answer_key="raw_llama_answers")
+        print("\n📊 Final Scores for RAW LLaMA Answers:")
+        for metric, value in raw_llama_scores.items():
+            print(f"{metric}: {value:.4f}")
+        all_scores["raw_llama_answers"] = raw_llama_scores
+
+        # Evaluate RAG GPT answers
+        rag_gpt_scores = evaluator.evaluate(test_data, answer_key="rag_gpt_answers")
+        print("\n📊 Final Scores for RAG GPT Answers:")
+        for metric, value in rag_gpt_scores.items():
+            print(f"{metric}: {value:.4f}")
+        all_scores["rag_gpt_answers"] = rag_gpt_scores
+
+        # Evaluate RAW GPT answers
+        raw_gpt_scores = evaluator.evaluate(test_data, answer_key="raw_gpt_answers")
+        print("\n📊 Final Scores for RAW GPT Answers:")
+        for metric, value in raw_gpt_scores.items():
+            print(f"{metric}: {value:.4f}")
+        all_scores["raw_gpt_answers"] = raw_gpt_scores
+
+        # Save all results to a single file
+        evaluator.save_results(all_scores, "dataset/test/matrics/ragas_scores.json")
 
     except Exception as e:
         print(f"💥 Evaluation failed completely: {e}")

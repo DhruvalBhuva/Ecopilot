@@ -15,9 +15,9 @@ logger.info("Loading documents...")
 chunked_documents = load_documents(config_loader.data_sources)
 
 
-save_all_chunks_to_json(
-    chunked_documents, config_loader.chunks_dict, max_chunks_per_file=500
-)
+# save_all_chunks_to_json(
+#     chunked_documents, config_loader.chunks_dict, max_chunks_per_file=500
+# )
 
 # ========== OpenAI Embedding ==========
 openai_embedder = OpenAIWrapper(

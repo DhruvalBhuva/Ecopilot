@@ -8,8 +8,7 @@ config_loader = LoadConfig()
 
 # Initialize RAG Pipeline
 rag_pipeline = RAGPipeline(
-    top_k_per_embedder=10,
-    top_k_final=5,
+    top_k=10,
 )
 
 

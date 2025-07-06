@@ -1,0 +1,22 @@
+{
+    "rag_llama_answers": {
+        "context_recall": 0.872636815920398,
+        "faithfulness": 0.44618947431201944,
+        "factual_correctness(mode=f1)": 0.3501492537313433
+    },
+    "raw_llama_answers": {
+        "context_recall": 0.8534825870646766,
+        "faithfulness": 0.17885933133172155,
+        "factual_correctness(mode=f1)": 0.15074626865671636
+    },
+    "rag_gpt_answers": {
+        "context_recall": 0.8609452736318407,
+        "faithfulness": 0.725000307173866,
+        "factual_correctness(mode=f1)": 0.4855223880597015
+    },
+    "raw_gpt_answers": {
+        "context_recall": 0.8472636815920398,
+        "faithfulness": 0.21136135249010232,
+        "factual_correctness(mode=f1)": 0.2134328358208955
+    }
+}

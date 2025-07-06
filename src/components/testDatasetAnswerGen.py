@@ -11,11 +11,12 @@ from src.components.postgreSQLRetriever import HybridRetriever
 class TestDatasetAnswerGenerator:
     def __init__(self):
         config_loader = LoadConfig()
-        self.rag_pipeline = RAGPipeline(top_k=10)
-        self.device = config_loader.device
+        self.rag_pipeline = RAGPipeline(top_k=5)
+        # self.device = config_loader.device
+        self.device = "cpu"  # Force CPU for compatibility
 
         self.openai_wrapper = OpenAIWrapper()
-        self.llama3_german_wrapper = Llama3GermanWrapper()
+        self.llama3_german_wrapper = Llama3GermanWrapper(device=self.device)
 
         self.postgres_wrapper = PostgreSQLWrapper()
 
@@ -44,7 +45,7 @@ class TestDatasetAnswerGenerator:
         """
         try:
             # raw_gpt_answers = self.openai_wrapper.raw_text_generator(question)
-            raw_llama_answers = self.llama3_german_wrapper.chat_llama3(question)
+            raw_llama_answers = self.llama3_german_wrapper.raw_text_generator(question)
             return {
                 # "raw_gpt_answers": raw_gpt_answers,
                 "raw_llama_answers": raw_llama_answers,
@@ -52,7 +53,7 @@ class TestDatasetAnswerGenerator:
         except Exception as e:
             print(f"Error generating raw answers for question '{question}': {e}")
             return {
-                "raw_gpt_answers": "",
+                # "raw_gpt_answers": "",
                 "raw_llama_answers": "",
             }
 
@@ -94,7 +95,9 @@ class TestDatasetAnswerGenerator:
                 test_data = json.load(f)
 
             updated_data = []
-            for entry in test_data:
+            for idx, entry in enumerate(test_data, start=1):
+                print(f"Processing entry #{idx}")
+
                 question = entry.get("question", "")
                 truth_answer = entry.get("truth_answer", "")
                 truth_answer_ids = entry.get("truth_answer_ids", [])
@@ -104,7 +107,7 @@ class TestDatasetAnswerGenerator:
                 meta_data = entry.get("meta_data", {})
 
                 if not question.strip():
-                    print("Warning: Empty question found, skipping entry.")
+                    print(f"Warning: Empty question found at entry #{idx}, skipping.")
                     continue
 
                 rag_generated_data = self.generate_rag_answers(question)
@@ -136,6 +139,6 @@ class TestDatasetAnswerGenerator:
 # Example usage
 if __name__ == "__main__":
     test_data_generator = TestDatasetAnswerGenerator()
-    input_file_path = "dataset/test/generator/generated_gpt_answers_1.json"
-    output_file_path = "dataset/test/generator/generated_gpt_answers_0-5.json"
+    input_file_path = "dataset/test/questions/generated_gpt_answers_1.json"
+    output_file_path = "dataset/test/questions/generated_rag_answers_2.json"
     test_data_generator.process_test_data(input_file_path, output_file_path)

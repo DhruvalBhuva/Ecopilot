@@ -17,7 +17,8 @@ class HybridRetriever:
         alpha: float = 0.5,
         enable_reranking: bool = True,
         reranker_model_name: str = "BAAI/bge-reranker-base",
-        device: str = "cuda",
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        # device: str = "cpu"
     ):
         self.postgres_wrapper = postgres_wrapper
         self.embedder = embedder

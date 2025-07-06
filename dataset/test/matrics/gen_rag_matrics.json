@@ -1,0 +1,28 @@
+{
+    "generation_metrics": {
+        "rag_llama_answers": {
+            "BLEU": 0.1248,
+            "ROUGE-L": 0.381,
+            "METEOR": 0.0,
+            "BERTScore": 0.791
+        },
+        "raw_llama_answers": {
+            "BLEU": 0.0467,
+            "ROUGE-L": 0.1915,
+            "METEOR": 0.0,
+            "BERTScore": 0.7077
+        },
+        "rag_gpt_answers": {
+            "BLEU": 0.1486,
+            "ROUGE-L": 0.3717,
+            "METEOR": 0.0,
+            "BERTScore": 0.7945
+        },
+        "raw_gpt_answers": {
+            "BLEU": 0.0338,
+            "ROUGE-L": 0.1686,
+            "METEOR": 0.0,
+            "BERTScore": 0.699
+        }
+    }
+}

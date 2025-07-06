@@ -28,6 +28,7 @@ class OpenAIWrapper:
         """
         self.api_key = config_loader.OPENAI_API_KEY
         # self.client = OpenAI(api_key=self.api_key)
+
         self.client = AzureOpenAI(
             api_key=config_loader.azure_openai_api_key,
             azure_endpoint=config_loader.azure_openai_api_base,
