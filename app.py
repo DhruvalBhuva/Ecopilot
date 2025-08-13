@@ -8,24 +8,16 @@ config_loader = LoadConfig()
 
 # Initialize RAG Pipeline
 rag_pipeline = RAGPipeline(
-    top_k=10,
+    top_k=5,
 )
 
 
 def generate_response(message, history, selected_model="GPT"):
     """
     Generate a response using the RAG pipeline and update the chat history.
-
-    Args:
-        message: The user's input message.
-        history: The chat history as a list of tuples (user_message, bot_response).
-        selected_model: The selected LLM model ("GPT" or "Llama3").
-
-    Returns:
-        Updated chat history and an empty input box.
     """
-    # Generate a response using the RAG pipeline
     try:
+        # Call the RAG pipeline to generate a response
         result = rag_pipeline.response(query=message, model=selected_model)
         bot_response = result["answer"]
     except Exception as e:
@@ -33,10 +25,10 @@ def generate_response(message, history, selected_model="GPT"):
             f"Sorry, an error occurred while generating the response: {str(e)}"
         )
 
-    # Append the user's message and the bot's response to the chat history
-    history.append((message, bot_response))
+    # Update chat history with user message and assistant response
+    history.append({"role": "user", "content": message})
+    history.append({"role": "assistant", "content": bot_response})
 
-    # Return the updated chat history and clear the input box
     return history, ""
 
 
@@ -48,6 +40,7 @@ with gr.Blocks() as demo:
         height=500,
         avatar_images=("assets/Images/User.png", "assets/Images/AI.png"),
         show_label=False,
+        type="messages", 
     )
 
     with gr.Row():
@@ -70,4 +63,4 @@ with gr.Blocks() as demo:
     )
 
 # Launch the Gradio app
-demo.launch(share=False)
+demo.launch(share=False)  # Set share=True to make it public
