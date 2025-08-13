@@ -70,7 +70,7 @@ def load_documents(sources):
 def load_pdf_with_langchain(pdf_path):
     """Loads PDFs using LangChain's UnstructuredPDFLoader."""
     try:
-        loader = UnstructuredPDFLoader(pdf_path)
+        loader = UnstructuredPDFLoader(pdf_path, strategy="hi_res")
         docs = loader.load()
 
         # Extract only the filename (not the full path)

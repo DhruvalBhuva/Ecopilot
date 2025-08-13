@@ -6,6 +6,8 @@ from src.load_config import LoadConfig
 from sklearn.preprocessing import MinMaxScaler
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 from src.components.openAIWrapper import OpenAIWrapper
+from src.components.jinaaiWrapper import JinaaiWrapper
+
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 
 
@@ -14,16 +16,15 @@ class HybridRetriever:
         self,
         postgres_wrapper: PostgreSQLWrapper,
         embedder: OpenAIWrapper,
-        alpha: float = 0.5,
+        alpha: float = 0.8,
         enable_reranking: bool = True,
-        reranker_model_name: str = "BAAI/bge-reranker-base",
+        reranker_model_name: str = "BAAI/bge-reranker-v2-m3",
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
-        # device: str = "cpu"
     ):
         self.postgres_wrapper = postgres_wrapper
         self.embedder = embedder
         self.alpha = alpha
-        self.enable_reranking = enable_reranking
+        self.enable_reranking = enable_reranking  
         self.scaler = MinMaxScaler()
         self.device = device
 
@@ -116,7 +117,7 @@ class HybridRetriever:
         normalized_scores = self.scaler.fit_transform(all_scores).flatten()
 
         dense_normalized = normalized_scores[: len(dense_results)]
-        sparse_normalized = normalized_scores[len(dense_results) :]
+        sparse_normalized = normalized_scores[len(dense_results):]
 
         return dense_normalized, sparse_normalized
 
@@ -143,92 +144,87 @@ class HybridRetriever:
             logger.error(f"Error during reranking: {e}")
             raise
 
-    def retrive(self, query_text, top_k=10, alpha=None):
+    def retrive(self, query_text, top_k=10, alpha=None, use_reranker=None):
+        """
+        Hybrid retrieval with optional reranking.
+        """
         alpha = alpha if alpha is not None else self.alpha
+        use_reranker = self.enable_reranking if use_reranker is None else use_reranker
 
         # Get both dense and sparse results
-        dense_results = self.dense_retrieval(query_text, top_k)
-        sparse_results = self.sparse_retrieval(query_text, top_k)
+        dense_results = self.dense_retrieval(query_text, 10)
+        sparse_results = self.sparse_retrieval(query_text, 10)
 
-        # If no sparse results, fall back to dense only
+        # If no sparse results, fallback to dense
         if not sparse_results:
             logger.warning("No sparse results found. Using dense results only.")
             for doc in dense_results:
                 doc["combined_score"] = doc["dense_score"]
             return (
                 self.rerank_results(query_text, dense_results[:top_k])
-                if self.enable_reranking
+                if use_reranker
                 else dense_results[:top_k]
             )
 
-        # Normalize scores between 0 and 1
+        # Normalize scores
         dense_norm, sparse_norm = self.normalize_scores(dense_results, sparse_results)
 
-        # Create a combined pool of all unique documents
+        # Combine results
         all_docs = {}
-
-        # Add dense results with their normalized scores
         for i, doc in enumerate(dense_results):
             doc_id = doc["id"]
-            if doc_id not in all_docs:
-                all_docs[doc_id] = doc.copy()
-                all_docs[doc_id]["dense_norm"] = dense_norm[i]
-                all_docs[doc_id]["sparse_norm"] = 0  # Initialize sparse score
+            all_docs[doc_id] = doc.copy()
+            all_docs[doc_id]["dense_norm"] = dense_norm[i]
+            all_docs[doc_id]["sparse_norm"] = 0
 
-        # Add sparse results with their normalized scores
         for i, doc in enumerate(sparse_results):
             doc_id = doc["id"]
             if doc_id in all_docs:
                 all_docs[doc_id]["sparse_norm"] = sparse_norm[i]
             else:
                 all_docs[doc_id] = doc.copy()
+                all_docs[doc_id]["dense_norm"] = 0
                 all_docs[doc_id]["sparse_norm"] = sparse_norm[i]
-                all_docs[doc_id]["dense_norm"] = 0  # Initialize dense score
 
-        # Calculate combined scores for all documents
         for doc_id in all_docs:
             all_docs[doc_id]["combined_score"] = (
                 alpha * all_docs[doc_id]["dense_norm"]
                 + (1 - alpha) * all_docs[doc_id]["sparse_norm"]
             )
 
-        # Convert to list and sort by combined score
         combined_results = sorted(
             all_docs.values(), key=lambda x: x["combined_score"], reverse=True
         )
-
-        # Take top_k results
         final_results = combined_results[:top_k]
 
         return (
             self.rerank_results(query_text, final_results)
-            if self.enable_reranking
+            if use_reranker
             else final_results
         )
 
-
-# Example usage
 if __name__ == "__main__":
     config_loader = LoadConfig()
     postgres_wrapper = PostgreSQLWrapper()
-    openai_embedder = OpenAIWrapper(embedding_model_name=config_loader.embedding_model)
+    jinaai_embedder = JinaaiWrapper()
 
     hybrid_retriever = HybridRetriever(
         postgres_wrapper=postgres_wrapper,
-        embedder=openai_embedder,
-        alpha=0.5,  # Tune as needed
+        embedder=jinaai_embedder,
+        alpha=0.8,
         device=config_loader.device,
     )
 
-    query = (
-        "Ab welchem Endenergieverbrauch müssen Unternehmen Umsetzungspläne erstellen?"
-    )
+    query = "Ab welchem Endenergieverbrauch müssen Unternehmen Umsetzungspläne erstellen?"
 
-    results = hybrid_retriever.retrive(query, top_k=10)
+    # ➡ With reranker
+    print("\nRetrieving with reranker enabled...")
+    results_rerank = hybrid_retriever.retrive(query, top_k=5, use_reranker=True)
+    for res in results_rerank:
+        print(f"[Reranker Score] {res.get('reranker_score', 0):.3f} - {res['text'][:80]}")
 
-    for result in results:
-        print(f"Source: {result['source']}, Chunk: {result['chunk_num']}")
-        print(f"Text: {result['text']}")
-        if "reranker_score" in result:
-            print(f"Reranker Score: {result['reranker_score']:.3f}")
-        print("-" * 50)
+    # ➡ Without reranker
+    print("\nRetrieving without reranker...")
+    results_no_rerank = hybrid_retriever.retrive(query, top_k=5, use_reranker=False)
+    for res in results_no_rerank:
+        print(f"[Combined Score] {res['combined_score']:.3f} - {res['text'][:80]}")

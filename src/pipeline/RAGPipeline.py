@@ -3,6 +3,7 @@ from typing import List, Dict
 from src.logger import logger
 from src.load_config import LoadConfig
 from src.components.openAIWrapper import OpenAIWrapper
+from src.components.jinaaiWrapper import JinaaiWrapper
 from src.components.postgreSQLWrapper import PostgreSQLWrapper
 from src.components.postgreSQLRetriever import HybridRetriever
 from src.components.llama3GermanWrapper import Llama3GermanWrapper
@@ -18,15 +19,16 @@ class RAGPipeline:
         """
         config_loader = LoadConfig()
         self.top_k = top_k
-        # self.device = config_loader.device
-        self.device = "cpu"  # Force CPU for compatibility
+        self.device = config_loader.device
+        # self.device = "cpu"  # Force CPU for compatibility
 
         # Initialize components with CPU
-        self.openai_embedder = OpenAIWrapper()
+        # self.openai_embedder = OpenAIWrapper()
+        self.jinaai_embedder = JinaaiWrapper()
         self.postgres_wrapper = PostgreSQLWrapper()
         self.hybrid_retriever = HybridRetriever(
             self.postgres_wrapper,
-            self.openai_embedder,
+            self.jinaai_embedder,
             enable_reranking=True,
             device=self.device,
         )
@@ -36,18 +38,11 @@ class RAGPipeline:
     def response(self, query: str, model="GPT") -> Dict:
         """
         Retrieve, rerank documents, and generate an answer in a single function.
-
-        Args:
-            query: The query string.
-            model: The model to use for answer generation ("GPT" or "Llama3").
-
-        Returns:
-            Dictionary containing the generated answer and reranked documents.
         """
         try:
             # Retrieve and rerank documents using HybridRetriever
             reranked_documents = self.hybrid_retriever.retrive(
-                query, top_k=self.top_k, alpha=0.6
+                query, top_k=self.top_k, 
             )
 
             # Combine the reranked documents into a single context
@@ -55,11 +50,12 @@ class RAGPipeline:
 
             # Create a prompt for the LLM
             prompt = f"""
-            Retrieved context:
-            {context}
 
             User Question:
             {query}
+            
+            Retrieved context:
+            {context}
             """
 
             # Generate the answer using the specified model
@@ -89,10 +85,10 @@ if __name__ == "__main__":
     )
 
     # Example query
-    query = "Welche Rolle spielt die OeMAG in der Förderung erneuerbarer Energien in Österreich?"
+    query = "What are the main differences between CSRD and SFDR disclosure obligations? Also write artical number, where I can find complete information about it."
 
     # Run the RAG pipeline
-    result = rag_pipeline.response(query, model="Llama3")
+    result = rag_pipeline.response(query, model="GPT")
 
     # Print the results
     print(f"Query: {query}")

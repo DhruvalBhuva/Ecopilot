@@ -23,7 +23,7 @@ class PostgreSQLWrapper:
         self.database = "ecopilot"
         self.user = "postgres"
         self.password = "postgres"
-        self.table = "corpus"
+        self.table = "jina_corpus"
         self.connection = self._connect_to_postgres()
 
         # self._create_table_if_not_exists()
@@ -41,7 +41,7 @@ class PostgreSQLWrapper:
             # register_vector(conn)  # Register pgvector extension
             return conn
         except Exception as e:
-            logger.error0(f"Error connecting to PostgreSQL: {e}")
+            logger.error(f"Error connecting to PostgreSQL: {e}")
             raise
 
     def close_connection(self):
@@ -123,7 +123,7 @@ class PostgreSQLWrapper:
 
                     cursor.execute(
                         f"""
-                        INSERT INTO "{table}" (source, chunk_num, embedding, text)
+                        INSERT INTO "{self.table}" (source, chunk_num, embedding, text)
                         VALUES (%s, %s, %s, %s);
                     """,
                         (
@@ -145,7 +145,7 @@ class PostgreSQLWrapper:
         """
         try:
             with self.connection.cursor() as cursor:
-                cursor.execute(f'SELECT COUNT(*) FROM "{table}";')
+                cursor.execute(f'SELECT COUNT(*) FROM "{self.table}";')
                 total_rows = cursor.fetchone()[0]
                 return total_rows
         except Exception as e:

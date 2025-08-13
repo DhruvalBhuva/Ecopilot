@@ -32,6 +32,7 @@ MANIFEST
 *.manifest
 *.spec
 
+dataset/
 data/
 chunks/
 
@@ -133,6 +134,7 @@ celerybeat.pid
 # Environments
 .env
 .venv
+jina_env/
 env/
 venv/
 ENV/

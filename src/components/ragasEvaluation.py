@@ -139,7 +139,7 @@ class RAGASEvaluator:
 
 if __name__ == "__main__":
     try:
-        with open("dataset/test/generator/rag_answers.json", encoding="utf-8") as f:
+        with open("dataset/test/generator/adv_rag_answers_2.json", encoding="utf-8") as f:
             test_data = json.load(f)
 
         config_loader = LoadConfig()
@@ -186,7 +186,7 @@ if __name__ == "__main__":
         all_scores["raw_gpt_answers"] = raw_gpt_scores
 
         # Save all results to a single file
-        evaluator.save_results(all_scores, "dataset/test/matrics/ragas_scores.json")
+        evaluator.save_results(all_scores, "dataset/test/matrics/adv_rag_answers_2.json")
 
     except Exception as e:
         print(f"💥 Evaluation failed completely: {e}")

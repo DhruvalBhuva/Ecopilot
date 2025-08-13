@@ -7,9 +7,10 @@ from rouge_score import rouge_scorer
 from nltk.tokenize import word_tokenize
 from typing import List, Dict, Optional
 from nltk.translate.bleu_score import corpus_bleu, SmoothingFunction
-from nltk.translate.meteor_score import meteor_score
+# Removed: from nltk.translate.meteor_score import meteor_score
 
 
+    
 class RAGEvaluator:
     def __init__(self):
         # Initialize metrics
@@ -114,17 +115,25 @@ class RAGEvaluator:
             references = []
             predictions = []
 
-            for item in test_data:
-                if "truth_answer" not in item or answer_type not in item:
+            for idx, item in enumerate(test_data):
+                missing_keys = []
+                if "truth_answer" not in item or item["truth_answer"] is None:
+                    missing_keys.append("truth_answer")
+                if answer_type not in item or item[answer_type] is None:
+                    missing_keys.append(answer_type)
+
+                if missing_keys:
+                    print(f"⚠️  Skipping item {idx}: missing {', '.join(missing_keys)}")
                     continue
+
                 references.append(item["truth_answer"])
                 predictions.append(item[answer_type])
+
 
             if not references or not predictions:
                 results[answer_type] = {
                     "BLEU": 0.0,
                     "ROUGE-L": 0.0,
-                    "METEOR": 0.0,
                     "BERTScore": 0.0,
                 }
                 continue
@@ -141,15 +150,13 @@ class RAGEvaluator:
                 bleu = 0.0
 
             rouge_l_scores = []
-            meteor_scores = []
             for ref, pred in zip(references, predictions):
                 try:
                     rouge_l_scores.append(
                         self.rouge.score(ref, pred)["rougeL"].fmeasure
                     )
-                    meteor_scores.append(meteor_score([ref], pred, language="de"))
                 except Exception as e:
-                    print(f"Error calculating ROUGE/METEOR: {e}")
+                    print(f"Error calculating ROUGE-L: {e}")
                     continue
 
             bert = self.bert_score.compute(
@@ -162,7 +169,6 @@ class RAGEvaluator:
             results[answer_type] = {
                 "BLEU": round(bleu, 4),
                 "ROUGE-L": round(np.mean(rouge_l_scores), 4) if rouge_l_scores else 0.0,
-                "METEOR": round(np.mean(meteor_scores), 4) if meteor_scores else 0.0,
                 "BERTScore": round(np.mean(bert["f1"]), 4) if bert["f1"] else 0.0,
             }
 
@@ -204,7 +210,7 @@ class RAGEvaluator:
 
 
 if __name__ == "__main__":
-    evaluation_data_file_path = "dataset/test/generator/rag_answers.json"
+    evaluation_data_file_path = "dataset/test/generator/adv_rag_answers_2.json"
 
     try:
         with open(evaluation_data_file_path, "r", encoding="utf-8") as f:
@@ -222,5 +228,5 @@ if __name__ == "__main__":
     metrics = evaluator.evaluate_rag(test_data)
     evaluator.print_metrics(metrics)
     evaluator.save_metrics_to_file(
-        metrics, "dataset/test/generator/gen_rag_matrics.json"
+        metrics, "dataset/test/matrics/adv_rag_answers_2.json"
     )

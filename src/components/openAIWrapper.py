@@ -18,14 +18,6 @@ class OpenAIWrapper:
         temperature=0.5,
         return_torch=True,
     ):
-        """
-        Initialize the OpenAI embedding model.
-
-        :param api_key: OpenAI API key.
-        :param embedding_model_name: Name of the OpenAI embedding model (default: "text-embedding-ada-002").
-        :param return_torch: If True, return embeddings as PyTorch tensors (default: False).
-                             Note: This is deprecated and will be removed in the future.
-        """
         self.api_key = config_loader.OPENAI_API_KEY
         # self.client = OpenAI(api_key=self.api_key)
 
@@ -90,10 +82,6 @@ class OpenAIWrapper:
     def count_tokens(self, texts, batch_size=16):
         """
         Count tokens for a list of texts using OpenAI's tokenizer.
-
-        :param texts: List of texts to count tokens for.
-        :param batch_size: Number of texts to process at once (default: 16).
-        :return: Total number of tokens.
         """
         token_counts = []
 
@@ -112,10 +100,6 @@ class OpenAIWrapper:
     def rag_text_generator(self, prompt, max_tokens=100):
         """
         Generate text based on a prompt using OpenAI's language model.
-
-        :param prompt: The prompt text.
-        :param max_tokens: The maximum number of tokens to generate (default: 100).
-        :return: The generated text.
         """
         try:
             chat_completion = self.client.chat.completions.create(

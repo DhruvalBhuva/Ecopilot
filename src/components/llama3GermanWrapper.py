@@ -13,7 +13,7 @@ config_loader = LoadConfig()
 class Llama3GermanWrapper:
     def __init__(
         self,
-        model_name=config_loader.llm_model_name,
+        model_name="DiscoResearch/Llama3-DiscoLeo-Instruct-8B-v0.1",
         device=config_loader.device,
     ):
         """
@@ -23,8 +23,8 @@ class Llama3GermanWrapper:
         :param device: The device to run the model on (e.g., "cuda" or "cpu").
         """
         self.model_name = model_name
-        # self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.device = "cpu"  # Force CPU for compatibility
+        self.device = device
+        # self.device = "cpu"  # Force CPU for compatibility
 
         # Load the model and tokenizer
         self.model = AutoModelForCausalLM.from_pretrained(self.model_name).to(
